@@ -3,14 +3,18 @@ import * as orderController from '../controllers/order.controller';
 import { authenticate } from '../middleware/auth.middleware';
 import { requireAdmin } from '../middleware/role.middleware';
 import { validate } from '../middleware/validate.middleware';
-import { updateOrderStatusSchema } from '../validators/order.validator';
+import { updateOrderStatusSchema, createOrderSchema } from '../validators/order.validator';
 
 const router = Router();
 
-router.use(authenticate, requireAdmin);
+// ── User routes (authenticated, any role) ───────────────────────────────────
+router.post('/', authenticate, validate(createOrderSchema), orderController.createOrder);
+router.get('/my', authenticate, orderController.getMyOrders);
+router.get('/my/:id', authenticate, orderController.getMyOrderById);
 
-router.get('/', orderController.getOrders);
-router.get('/:id', orderController.getOrderById);
-router.patch('/:id/status', validate(updateOrderStatusSchema), orderController.updateOrderStatus);
+// ── Admin routes ─────────────────────────────────────────────────────────────
+router.get('/', authenticate, requireAdmin, orderController.getOrders);
+router.get('/:id', authenticate, requireAdmin, orderController.getOrderById);
+router.patch('/:id/status', authenticate, requireAdmin, validate(updateOrderStatusSchema), orderController.updateOrderStatus);
 
 export default router;

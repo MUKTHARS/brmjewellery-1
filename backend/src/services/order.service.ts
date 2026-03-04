@@ -3,6 +3,93 @@ import { AppError } from '../utils/apiResponse.utils';
 import { HTTP_STATUS } from '../constants/httpStatus.constants';
 import { ERROR_MESSAGES } from '../constants/errorMessages.constants';
 import { PaginationOptions } from '../utils/pagination.utils';
+import type { CreateOrderInput } from '../validators/order.validator';
+
+const FREE_SHIPPING_THRESHOLD = 100;
+const SHIPPING_COST = 5.99;
+const VAT_RATE = 0.2;
+
+export const createOrder = async (userId: string, data: CreateOrderInput) => {
+  const productIds = data.items.map((i) => i.productId);
+  const products = await prisma.product.findMany({
+    where: { id: { in: productIds }, isActive: true },
+  });
+  if (products.length !== productIds.length) {
+    throw new AppError('One or more products are unavailable', HTTP_STATUS.BAD_REQUEST);
+  }
+
+  const lineItems = data.items.map((item) => {
+    const product = products.find((p) => p.id === item.productId)!;
+    return {
+      productId: item.productId,
+      quantity: item.quantity,
+      priceAtPurchaseGBP: Number(product.baseCost),
+      productTitle: product.title,
+      productSku: product.sku,
+      metalType: product.metalType ?? undefined,
+      carat: product.carat ?? undefined,
+      weightGrams: product.weightGrams ? Number(product.weightGrams) : undefined,
+    };
+  });
+
+  const subtotal = parseFloat(lineItems.reduce((s, i) => s + i.priceAtPurchaseGBP * i.quantity, 0).toFixed(2));
+  const vatAmount = parseFloat((subtotal * VAT_RATE).toFixed(2));
+  const shippingCost = subtotal >= FREE_SHIPPING_THRESHOLD ? 0 : SHIPPING_COST;
+  const total = parseFloat((subtotal + vatAmount + shippingCost).toFixed(2));
+
+  const orderCount = await prisma.order.count();
+  const d = new Date();
+  const orderNumber = `BRM-${d.getFullYear()}${String(d.getMonth() + 1).padStart(2, '0')}${String(d.getDate()).padStart(2, '0')}-${String(orderCount + 1).padStart(4, '0')}`;
+
+  return prisma.order.create({
+    data: {
+      orderNumber,
+      userId,
+      subtotalGBP: subtotal,
+      vatGBP: vatAmount,
+      totalGBP: total,
+      shippingCostGBP: shippingCost,
+      shippingAddress: data.shippingAddress as any,
+      deliveryMethod: data.deliveryMethod,
+      notes: data.notes,
+      items: { create: lineItems },
+    },
+    include: {
+      items: { include: { product: { select: { title: true, sku: true, images: { where: { isPrimary: true }, take: 1 } } } } },
+    },
+  });
+};
+
+export const getUserOrders = async (userId: string, pagination: PaginationOptions) => {
+  const [total, orders] = await Promise.all([
+    prisma.order.count({ where: { userId } }),
+    prisma.order.findMany({
+      where: { userId },
+      skip: pagination.skip,
+      take: pagination.limit,
+      orderBy: { createdAt: 'desc' },
+      include: {
+        items: { include: { product: { select: { title: true, images: { where: { isPrimary: true }, take: 1 } } } } },
+        shipment: { select: { courier: true, trackingNumber: true, status: true } },
+        invoice: { select: { id: true, invoiceNumber: true, pdfUrl: true } },
+      },
+    }),
+  ]);
+  return { orders, total };
+};
+
+export const getUserOrderById = async (id: string, userId: string) => {
+  const order = await prisma.order.findFirst({
+    where: { id, userId },
+    include: {
+      items: { include: { product: { select: { title: true, sku: true, images: { where: { isPrimary: true }, take: 1 } } } } },
+      shipment: true,
+      invoice: true,
+    },
+  });
+  if (!order) throw new AppError(ERROR_MESSAGES.ORDER_NOT_FOUND, HTTP_STATUS.NOT_FOUND);
+  return order;
+};
 
 export const getOrders = async (
   pagination: PaginationOptions,

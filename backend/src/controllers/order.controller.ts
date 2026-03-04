@@ -5,6 +5,22 @@ import { HTTP_STATUS } from '../constants/httpStatus.constants';
 import { getPagination, buildPaginationMeta } from '../utils/pagination.utils';
 import * as orderService from '../services/order.service';
 
+export const createOrder = asyncHandler(async (req: Request, res: Response) => {
+  const order = await orderService.createOrder(req.user!.id, req.body);
+  sendSuccess(res, order, 'Order created', HTTP_STATUS.CREATED);
+});
+
+export const getMyOrders = asyncHandler(async (req: Request, res: Response) => {
+  const pagination = getPagination(req);
+  const { orders, total } = await orderService.getUserOrders(req.user!.id, pagination);
+  sendSuccess(res, orders, 'Orders retrieved', HTTP_STATUS.OK, buildPaginationMeta(total, pagination.page, pagination.limit));
+});
+
+export const getMyOrderById = asyncHandler(async (req: Request, res: Response) => {
+  const order = await orderService.getUserOrderById(req.params.id, req.user!.id);
+  sendSuccess(res, order, 'Order retrieved');
+});
+
 export const getOrders = asyncHandler(async (req: Request, res: Response) => {
   const pagination = getPagination(req);
   const { orders, total } = await orderService.getOrders(pagination, {
