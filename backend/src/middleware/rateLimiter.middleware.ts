@@ -13,13 +13,25 @@ export const globalRateLimiter = rateLimit({
   },
 });
 
+// Applied to login — stricter to prevent brute force
 export const authRateLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 10,
+  max: 20,
   standardHeaders: true,
   legacyHeaders: false,
   handler: (_req, res) => {
     sendError(res, 'Too many login attempts. Please try again in 15 minutes.', HTTP_STATUS.TOO_MANY_REQUESTS);
+  },
+});
+
+// Applied to register — more lenient, users may retry with different passwords
+export const registerRateLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000, // 1 hour
+  max: 20,
+  standardHeaders: true,
+  legacyHeaders: false,
+  handler: (_req, res) => {
+    sendError(res, 'Too many registration attempts. Please try again in 1 hour.', HTTP_STATUS.TOO_MANY_REQUESTS);
   },
 });
 

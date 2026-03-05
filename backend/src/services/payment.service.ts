@@ -21,7 +21,16 @@ export const createPaymentIntent = async (orderId: string) => {
     currency: 'gbp',
     metadata: { orderId, orderNumber: order.orderNumber },
     receipt_email: order.user.email,
+    // Enables all payment methods active in Stripe Dashboard:
+    // Visa, Mastercard, PayPal, Apple Pay, Google Pay, Klarna, Clearpay, etc.
     automatic_payment_methods: { enabled: true },
+    // Pre-fill billing email for BNPL eligibility checks (Klarna, Clearpay)
+    payment_method_data: undefined,
+    ...(order.user.email && {
+      payment_method_options: {
+        klarna: { preferred_locale: 'en-GB' },
+      },
+    }),
   });
 
   await prisma.order.update({

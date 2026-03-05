@@ -12,7 +12,15 @@ export const registerSchema = z.object({
     .regex(/[A-Z]/, 'Password must contain at least one uppercase letter')
     .regex(/[a-z]/, 'Password must contain at least one lowercase letter')
     .regex(/[0-9]/, 'Password must contain at least one number'),
-  phone: z.string().regex(ukPhoneRegex, 'Invalid UK phone number').optional(),
+  // Strip spaces/dashes/parens; silently drop non-UK numbers rather than blocking registration
+  phone: z.preprocess(
+    (v) => {
+      if (typeof v !== 'string' || !v.trim()) return undefined;
+      const stripped = v.replace(/[\s\-\(\)]/g, '');
+      return ukPhoneRegex.test(stripped) ? stripped : undefined;
+    },
+    z.string().optional(),
+  ),
 });
 
 export const loginSchema = z.object({

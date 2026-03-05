@@ -9,8 +9,12 @@ const router = Router();
 // Stripe webhook — raw body required
 router.post('/webhook', express.raw({ type: 'application/json' }), paymentController.stripeWebhook);
 
-// Authenticated
+// Stripe — authenticated
 router.post('/create-intent', authenticate, paymentController.createPaymentIntent);
 router.post('/refund', authenticate, requireAdmin, paymentController.refundOrder);
+
+// PayPal — authenticated
+router.post('/paypal/create-order', authenticate, paymentController.createPaypalOrder);
+router.post('/paypal/capture', authenticate, paymentController.capturePaypalOrder);
 
 export default router;

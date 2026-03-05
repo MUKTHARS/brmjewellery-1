@@ -4,6 +4,7 @@ import { sendSuccess, sendError } from '../utils/apiResponse.utils';
 import { HTTP_STATUS } from '../constants/httpStatus.constants';
 import { env } from '../config/env.config';
 import * as paymentService from '../services/payment.service';
+import * as paypalService from '../services/paypal.service';
 
 export const createPaymentIntent = asyncHandler(async (req: Request, res: Response) => {
   const result = await paymentService.createPaymentIntent(req.body.orderId);
@@ -25,4 +26,16 @@ export const refundOrder = asyncHandler(async (req: Request, res: Response) => {
   const amountPence = amount ? Math.round(amount * 100) : undefined;
   const refund = await paymentService.refundOrder(orderId, amountPence, reason);
   sendSuccess(res, refund, 'Refund processed');
+});
+
+// ── PayPal ───────────────────────────────────────────────────────────────────
+
+export const createPaypalOrder = asyncHandler(async (req: Request, res: Response) => {
+  const result = await paypalService.createPaypalOrder(req.body.orderId);
+  sendSuccess(res, result, 'PayPal order created');
+});
+
+export const capturePaypalOrder = asyncHandler(async (req: Request, res: Response) => {
+  const result = await paypalService.capturePaypalOrder(req.body.paypalOrderId);
+  sendSuccess(res, result, 'PayPal payment captured');
 });

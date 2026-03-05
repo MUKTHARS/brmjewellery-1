@@ -1,54 +1,58 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
-import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import toast from 'react-hot-toast';
 
-export default function LoginPage() {
-  const { login, user, loading } = useAuth();
+export default function AdminLoginPage() {
+  const { login, user, loading, isAdmin } = useAuth();
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const redirect = searchParams.get('redirect') || '/';
-
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
-  // Already logged in — go to intended page
+  // Already logged in as admin — go to dashboard
   useEffect(() => {
-    if (!loading && user) router.replace(redirect);
-  }, [user, loading, redirect, router]);
+    if (!loading && user && isAdmin) router.replace('/admin');
+  }, [user, loading, isAdmin, router]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSubmitting(true);
     try {
       await login(email, password);
-      router.push(redirect);
+      // AuthContext sets user; the useEffect above will redirect if admin
+      // If not admin, show error
     } catch (err: unknown) {
-      const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message || 'Invalid email or password';
+      const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message || 'Invalid credentials';
       toast.error(msg);
     } finally {
       setSubmitting(false);
     }
   };
 
+  // After login, check role
+  useEffect(() => {
+    if (!loading && user && !isAdmin) {
+      toast.error('Access denied — admin account required');
+      localStorage.removeItem('accessToken');
+      router.replace('/admin/login');
+    }
+  }, [user, loading, isAdmin, router]);
+
   return (
     <div className="min-h-screen bg-cream flex items-center justify-center px-4">
       <div className="w-full max-w-sm">
         {/* Logo */}
         <div className="text-center mb-10">
-          <Link href="/">
-            <h1 className="font-cormorant text-4xl font-light tracking-[0.3em] text-ink">BRM</h1>
-            <p className="text-xs text-ink-muted tracking-[0.2em] uppercase mt-1">Jewellery · London</p>
-          </Link>
+          <h1 className="font-cormorant text-4xl font-light tracking-[0.3em] text-ink">BRM</h1>
+          <p className="text-xs text-ink-muted tracking-[0.2em] uppercase mt-1">Jewellery · Admin</p>
           <div className="w-16 h-px bg-gold mx-auto mt-4" />
         </div>
 
         <div className="bg-white border border-gray-100 shadow-card p-8">
-          <h2 className="font-cormorant text-2xl font-light text-ink mb-6">Sign In</h2>
+          <h2 className="font-cormorant text-2xl font-light text-ink mb-6">Admin Sign In</h2>
 
           <form onSubmit={handleSubmit} className="space-y-5">
             <div>
@@ -58,7 +62,7 @@ export default function LoginPage() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 className="input-base"
-                placeholder="you@example.com"
+                placeholder="admin@brmjewellery.co.uk"
                 required
                 autoComplete="email"
               />
@@ -87,12 +91,7 @@ export default function LoginPage() {
           </form>
         </div>
 
-        <p className="text-center text-xs text-ink-muted mt-6">
-          Don&apos;t have an account?{' '}
-          <Link href="/register" className="text-gold hover:underline">
-            Create one
-          </Link>
-        </p>
+        <p className="text-center text-xs text-ink-muted mt-6">BRM Jewellery · Admin Portal</p>
       </div>
     </div>
   );

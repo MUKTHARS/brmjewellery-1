@@ -79,7 +79,7 @@ export default function Sidebar() {
           </div>
         </div>
         <button
-          onClick={logout}
+          onClick={() => logout('/admin/login')}
           className="flex items-center gap-2 w-full px-4 py-2 text-sm text-ink-muted hover:text-danger transition-colors"
         >
           <LogOut size={14} />

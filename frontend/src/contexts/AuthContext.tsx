@@ -15,7 +15,7 @@ interface AuthContextType {
   user: AuthUser | null;
   loading: boolean;
   login: (email: string, password: string) => Promise<void>;
-  logout: () => Promise<void>;
+  logout: (redirectTo?: string) => Promise<void>;
   isAdmin: boolean;
 }
 
@@ -53,12 +53,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setUser(authUser);
   };
 
-  const logout = async () => {
+  const logout = async (redirectTo = '/login') => {
     try { await authApi.logout(); } catch { /* ignore */ }
     setUser(null);
     if (typeof window !== 'undefined') {
       localStorage.removeItem('accessToken');
-      window.location.href = '/login';
+      window.location.href = redirectTo;
     }
   };
 
