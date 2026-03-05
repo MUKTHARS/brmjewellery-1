@@ -23,8 +23,7 @@ app.use(compression());
 // Logging
 app.use(requestLogger);
 
-// Body parsing — webhook route needs raw body, so must come before json middleware
-app.use('/api/v1/payment/webhook', express.raw({ type: 'application/json' }));
+// Body parsing
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());

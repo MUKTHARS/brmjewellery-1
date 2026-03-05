@@ -19,13 +19,10 @@ const envSchema = z.object({
   JWT_ACCESS_EXPIRES_IN: z.string().default('15m'),
   JWT_REFRESH_EXPIRES_IN: z.string().default('7d'),
 
-  STRIPE_SECRET_KEY: z.string().min(1, 'STRIPE_SECRET_KEY is required'),
-  STRIPE_PUBLISHABLE_KEY: z.string().min(1, 'STRIPE_PUBLISHABLE_KEY is required'),
-  STRIPE_WEBHOOK_SECRET: z.string().min(1, 'STRIPE_WEBHOOK_SECRET is required'),
-
-  PAYPAL_CLIENT_ID: z.string().default(''),
-  PAYPAL_CLIENT_SECRET: z.string().default(''),
-  PAYPAL_MODE: z.enum(['sandbox', 'live']).default('sandbox'),
+  // UK Bank account details for bank transfer & BNPL instalment instructions
+  BANK_ACCOUNT_NAME: z.string().default('BRM Jewellery Ltd'),
+  BANK_SORT_CODE: z.string().default('00-00-00'),
+  BANK_ACCOUNT_NUMBER: z.string().default('00000000'),
 
   SMTP_HOST: z.string().default('smtp.gmail.com'),
   SMTP_PORT: z.string().default('587').transform(Number),

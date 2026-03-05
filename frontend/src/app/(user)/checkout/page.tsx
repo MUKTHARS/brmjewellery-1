@@ -1,20 +1,26 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import { loadStripe } from '@stripe/stripe-js';
-import { Elements, PaymentElement, useStripe, useElements } from '@stripe/react-stripe-js';
-import { PayPalScriptProvider, PayPalButtons, usePayPalScriptReducer } from '@paypal/react-paypal-js';
-import { Lock, ChevronDown, ChevronUp, CreditCard } from 'lucide-react';
+import { Lock, ChevronDown, ChevronUp, Building2 } from 'lucide-react';
 import { useCart } from '@/contexts/CartContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { userOrderApi } from '@/api/order.user.api';
 import { paymentApi } from '@/api/payment.api';
-import { paypalApi } from '@/api/paypal.api';
 import { formatGBP } from '@/lib/formatCurrency';
 import toast from 'react-hot-toast';
 
-const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY || '');
+// ── Types ─────────────────────────────────────────────────────────────────────
+
+type PaymentMethod =
+  | 'visa'
+  | 'mastercard'
+  | 'apple_pay'
+  | 'klarna'
+  | 'clearpay'
+  | 'bank_transfer';
+
+// ── Constants ─────────────────────────────────────────────────────────────────
 
 const FREE_SHIPPING_THRESHOLD = 100;
 const SHIPPING_COST = 5.99;
@@ -26,112 +32,344 @@ const DELIVERY_OPTIONS = [
   { value: 'NEXT_DAY', label: 'Next Day', sub: 'Order before 1pm', price: () => 14.99 },
 ];
 
-// ── Stripe payment form ───────────────────────────────────────────────────────
-function StripePaymentForm({ orderId }: { orderId: string }) {
-  const stripe = useStripe();
-  const elements = useElements();
-  const [paying, setPaying] = useState(false);
-  const [elementReady, setElementReady] = useState(false);
+const CARD_METHODS: PaymentMethod[] = ['visa', 'mastercard'];
+const PENDING_METHODS: PaymentMethod[] = ['klarna', 'clearpay', 'bank_transfer'];
 
-  // Fallback: enable button after 5s if onReady hasn't fired (e.g. slow network)
-  useEffect(() => {
-    const t = setTimeout(() => setElementReady(true), 5000);
-    return () => clearTimeout(t);
-  }, []);
+// ── Payment method metadata ───────────────────────────────────────────────────
 
-  const handlePay = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!stripe || !elements || !elementReady) return;
-    setPaying(true);
-    const { error } = await stripe.confirmPayment({
-      elements,
-      confirmParams: { return_url: `${window.location.origin}/checkout/success?orderId=${orderId}` },
-    });
-    if (error) { toast.error(error.message || 'Payment failed'); setPaying(false); }
+const PAYMENT_METHODS = [
+  {
+    id: 'visa' as PaymentMethod,
+    label: 'Visa',
+    sub: 'Credit & debit',
+    icon: (
+      <svg viewBox="0 0 780 500" className="h-6 w-auto" aria-label="Visa">
+        <rect width="780" height="500" rx="40" fill="#1A1F71"/>
+        <path d="M293 348.5L326.5 153H377L343.5 348.5H293Z" fill="white"/>
+        <path d="M524 157.3C513.8 153.5 497.8 149.5 477.8 149.5C428.3 149.5 393.3 175.3 393 212.5C392.8 239.8 418.5 254.8 438 263.8C458 273 464.5 279 464.5 287.5C464.3 300.5 448.5 306.3 433.8 306.3C413.5 306.3 402.5 303.3 385.8 296L379 293L371.8 339.3C383.8 344.8 406.3 349.5 429.8 349.8C482.5 349.8 516.8 324.3 517.3 284.5C517.5 262.5 504 245.8 474.5 231.8C456.5 222.8 445.5 216.8 445.5 207.8C445.8 199.5 455.3 191 476.3 191C493.8 190.8 506.5 194.5 516.5 198.3L521.3 200.5L528.3 157L524 157.3Z" fill="white"/>
+        <path d="M640.5 153H601C588.5 153 579.3 156.5 574.3 169.3L499.5 348.5H552.3L562.8 319.3L626.5 319.5C628 331.5 637 348.5 637 348.5H684L640.5 153ZM578 281.3C582 270.3 601.3 219.3 601.3 219.3C601 219.8 605.3 208 607.8 200.8L611.3 217.5C611.3 217.5 622.3 269.5 624.5 281.3H578Z" fill="white"/>
+        <path d="M244.5 153L195.3 279.5L189.8 252.5C180.3 222 151.8 188.8 120 172.3L164.8 348.3H218L297.5 153H244.5Z" fill="white"/>
+        <path d="M147.5 153H65.5L65 156.8C127.5 172.3 169.3 207.5 186.3 252.5L169 169.5C166 156.8 157 153.5 147.5 153Z" fill="#F2AE14"/>
+      </svg>
+    ),
+  },
+  {
+    id: 'mastercard' as PaymentMethod,
+    label: 'Mastercard',
+    sub: 'Credit & debit',
+    icon: (
+      <svg viewBox="0 0 131.39 86.9" className="h-6 w-auto" aria-label="Mastercard">
+        <circle cx="43.45" cy="43.45" r="43.45" fill="#EB001B"/>
+        <circle cx="87.94" cy="43.45" r="43.45" fill="#F79E1B"/>
+        <path d="M65.7 13.15a43.45 43.45 0 0 1 0 60.6 43.45 43.45 0 0 1 0-60.6Z" fill="#FF5F00"/>
+      </svg>
+    ),
+  },
+  {
+    id: 'apple_pay' as PaymentMethod,
+    label: 'Apple Pay',
+    sub: 'Touch ID / Face ID',
+    icon: (
+      <svg viewBox="0 0 165 105" className="h-6 w-auto" aria-label="Apple Pay">
+        <rect width="165" height="105" rx="10" fill="#000"/>
+        <path d="M60 35c-1.4 1.7-3.7 3-5.9 2.8-.3-2.3.8-4.7 2.1-6.2 1.4-1.7 3.8-3 5.8-3.1.2 2.4-.7 4.8-2 6.5zm1.9 3c-3.3-.2-6.1 1.9-7.7 1.9-1.6 0-4-1.8-6.6-1.7-3.4.1-6.5 2-8.2 5.1-3.5 6.1-.9 15.1 2.5 20 1.6 2.4 3.6 5.1 6.1 5 2.4-.1 3.4-1.6 6.3-1.6s3.8 1.6 6.4 1.5c2.6-.1 4.3-2.4 5.9-4.8 1.9-2.7 2.6-5.3 2.7-5.5-.1 0-5.2-2-5.2-7.8 0-4.9 4-7.2 4.2-7.4-2.3-3.4-5.9-3.7-7.4-3.7z" fill="white"/>
+        <text x="90" y="62" fontFamily="system-ui" fontSize="28" fontWeight="600" fill="white">Pay</text>
+      </svg>
+    ),
+  },
+  {
+    id: 'klarna' as PaymentMethod,
+    label: 'Klarna',
+    sub: 'Pay in 3 — interest free',
+    icon: (
+      <svg viewBox="0 0 512 170" className="h-5 w-auto" aria-label="Klarna">
+        <rect width="512" height="170" fill="#FFB3C7"/>
+        <text x="30" y="120" fontFamily="system-ui" fontSize="90" fontWeight="800" fill="#000">klarna</text>
+      </svg>
+    ),
+  },
+  {
+    id: 'clearpay' as PaymentMethod,
+    label: 'Clearpay',
+    sub: 'Pay in 4 — interest free',
+    icon: (
+      <svg viewBox="0 0 512 170" className="h-5 w-auto" aria-label="Clearpay">
+        <rect width="512" height="170" fill="#B2FCE4"/>
+        <text x="20" y="120" fontFamily="system-ui" fontSize="80" fontWeight="800" fill="#000">Clearpay</text>
+      </svg>
+    ),
+  },
+  {
+    id: 'bank_transfer' as PaymentMethod,
+    label: 'Bank Transfer',
+    sub: 'UK bank transfer',
+    icon: <Building2 size={24} className="text-ink" />,
+  },
+];
+
+// ── Card form (visual only — payment collected via terminal) ──────────────────
+
+function CardForm({ method, total, onPay, paying }: {
+  method: PaymentMethod;
+  total: number;
+  onPay: () => void;
+  paying: boolean;
+}) {
+  const [name, setName] = useState('');
+  const [number, setNumber] = useState('');
+  const [expiry, setExpiry] = useState('');
+  const [cvv, setCvv] = useState('');
+
+  const formatNumber = (v: string) =>
+    v.replace(/\D/g, '').slice(0, 16).replace(/(.{4})/g, '$1 ').trim();
+  const formatExpiry = (v: string) => {
+    const d = v.replace(/\D/g, '').slice(0, 4);
+    return d.length >= 3 ? `${d.slice(0, 2)} / ${d.slice(2)}` : d;
   };
 
+  const cardLabel = method === 'visa' ? 'Visa' : 'Mastercard';
+
   return (
-    <form onSubmit={handlePay} className="space-y-5">
-      {!elementReady && (
-        <div className="flex items-center justify-center py-8">
-          <div className="w-6 h-6 border-2 border-gold border-t-transparent rounded-full animate-spin" />
+    <div className="space-y-4">
+      <p className="text-xs text-ink-muted">
+        Your card details are used to confirm your identity. Payment will be collected via our secure in-store terminal when your order is fulfilled.
+      </p>
+      <div>
+        <label className="label-base">Name on Card</label>
+        <input
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          placeholder="J. Smith"
+          className="input-base"
+        />
+      </div>
+      <div>
+        <label className="label-base">{cardLabel} Card Number</label>
+        <input
+          value={number}
+          onChange={(e) => setNumber(formatNumber(e.target.value))}
+          placeholder="1234 5678 9012 3456"
+          inputMode="numeric"
+          maxLength={19}
+          className="input-base font-mono tracking-widest"
+        />
+      </div>
+      <div className="grid grid-cols-2 gap-3">
+        <div>
+          <label className="label-base">Expiry Date</label>
+          <input
+            value={expiry}
+            onChange={(e) => setExpiry(formatExpiry(e.target.value))}
+            placeholder="MM / YY"
+            inputMode="numeric"
+            maxLength={7}
+            className="input-base"
+          />
         </div>
-      )}
-      <PaymentElement onReady={() => setElementReady(true)} />
-      <button type="submit" disabled={paying || !stripe || !elementReady}
-        className="w-full btn-gold py-3.5 flex items-center justify-center gap-2 text-sm uppercase tracking-widest disabled:opacity-60">
-        <Lock size={14} /> {paying ? 'Processing…' : 'Pay Now'}
+        <div>
+          <label className="label-base">CVV</label>
+          <input
+            value={cvv}
+            onChange={(e) => setCvv(e.target.value.replace(/\D/g, '').slice(0, 4))}
+            placeholder="123"
+            inputMode="numeric"
+            maxLength={4}
+            className="input-base"
+            type="password"
+          />
+        </div>
+      </div>
+      <button
+        type="button"
+        onClick={onPay}
+        disabled={paying || !name || number.replace(/\s/g, '').length < 16 || expiry.length < 7 || cvv.length < 3}
+        className="w-full btn-gold py-3.5 flex items-center justify-center gap-2 text-sm uppercase tracking-widest disabled:opacity-60"
+      >
+        <Lock size={14} />
+        {paying ? 'Processing…' : `Pay ${formatGBP(total)}`}
       </button>
-    </form>
+    </div>
   );
 }
 
-// ── PayPal buttons ────────────────────────────────────────────────────────────
-function PayPalCheckoutButtons({ orderId, onSuccess }: { orderId: string; onSuccess: () => void }) {
-  const [{ isPending }] = usePayPalScriptReducer();
+// ── Apple Pay (simulated — marks order PAID, terminal collects) ───────────────
 
-  if (isPending) return (
-    <div className="flex items-center justify-center py-8">
-      <div className="w-6 h-6 border-2 border-gold border-t-transparent rounded-full animate-spin" />
+function ApplePayButton({ total, onPay, paying }: { total: number; onPay: () => void; paying: boolean }) {
+  return (
+    <div className="space-y-4">
+      <p className="text-xs text-ink-muted">
+        Confirm your order and pay quickly using Touch ID or Face ID. Payment is collected via our in-store terminal upon fulfilment.
+      </p>
+      <button
+        type="button"
+        onClick={onPay}
+        disabled={paying}
+        className="w-full bg-black text-white py-3.5 flex items-center justify-center gap-2 text-sm font-semibold disabled:opacity-60 rounded-sm"
+      >
+        {paying ? (
+          <span>Processing…</span>
+        ) : (
+          <>
+            <svg viewBox="0 0 20 14" className="h-4 w-auto fill-white" aria-hidden="true">
+              <path d="M10 1.5c-.8 1-2.1 1.8-3.4 1.7-.2-1.3.5-2.7 1.2-3.6C8.7-.3 10.1-.1 10 1.5zm.9 1.7c-1.9-.1-3.5 1.1-4.4 1.1-.9 0-2.3-1-3.8-1C.9 4.4-.1 5.5-.1 7.2c0 3.5 3 8.8 4.6 8.8.9 0 1.3-.6 2.5-.6s1.6.6 2.6.6c1.6 0 4.6-5.1 4.6-8.8 0-2-.9-3.9-3.3-4z"/>
+            </svg>
+            <span>Pay {formatGBP(total)} with Apple Pay</span>
+          </>
+        )}
+      </button>
     </div>
   );
+}
+
+// ── Klarna instalment form ────────────────────────────────────────────────────
+
+function KlarnaForm({ total, onPay, paying }: { total: number; onPay: () => void; paying: boolean }) {
+  const instalment = parseFloat((total / 3).toFixed(2));
+  const today = new Date();
+  const d30 = new Date(today); d30.setDate(today.getDate() + 30);
+  const d60 = new Date(today); d60.setDate(today.getDate() + 60);
+  const fmt = (d: Date) => d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
 
   return (
-    <PayPalButtons
-      style={{ layout: 'vertical', color: 'gold', shape: 'rect', label: 'paypal', height: 48 }}
-      createOrder={async () => {
-        const res = await paypalApi.createOrder(orderId);
-        return res.data.data.paypalOrderId as string;
-      }}
-      onApprove={async (data) => {
-        await paypalApi.captureOrder(data.orderID);
-        onSuccess();
-      }}
-      onError={(err) => {
-        console.error('PayPal error', err);
-        toast.error('PayPal payment failed. Please try again.');
-      }}
-      onCancel={() => toast.error('Payment cancelled')}
-    />
+    <div className="space-y-4">
+      <p className="text-xs text-ink-muted">
+        Split your purchase into 3 equal interest-free instalments. Bank transfer instructions will be emailed to you.
+      </p>
+      <div className="border border-gold/10 divide-y divide-gold/10">
+        {[
+          { label: 'Today', date: fmt(today), amount: instalment },
+          { label: '2nd payment', date: fmt(d30), amount: instalment },
+          { label: '3rd payment', date: fmt(d60), amount: parseFloat((total - instalment * 2).toFixed(2)) },
+        ].map((row) => (
+          <div key={row.label} className="flex items-center justify-between px-4 py-2.5 text-xs">
+            <span className="text-ink font-medium">{row.label}</span>
+            <span className="text-ink-muted">{row.date}</span>
+            <span className="font-semibold tabular-nums">{formatGBP(row.amount)}</span>
+          </div>
+        ))}
+      </div>
+      <button
+        type="button"
+        onClick={onPay}
+        disabled={paying}
+        className="w-full py-3.5 flex items-center justify-center gap-2 text-sm font-semibold uppercase tracking-widest disabled:opacity-60 bg-[#FFB3C7] text-black hover:bg-[#ff9ab8] transition-colors"
+      >
+        <Lock size={14} />
+        {paying ? 'Processing…' : `Pay with Klarna — ${formatGBP(instalment)} today`}
+      </button>
+    </div>
+  );
+}
+
+// ── Clearpay instalment form ──────────────────────────────────────────────────
+
+function ClearpayForm({ total, onPay, paying }: { total: number; onPay: () => void; paying: boolean }) {
+  const instalment = parseFloat((total / 4).toFixed(2));
+  const today = new Date();
+  const fmt = (d: Date) => d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+  const offsets = [0, 14, 28, 42];
+
+  return (
+    <div className="space-y-4">
+      <p className="text-xs text-ink-muted">
+        Split your purchase into 4 equal interest-free payments. Bank transfer instructions will be emailed to you.
+      </p>
+      <div className="border border-gold/10 divide-y divide-gold/10">
+        {offsets.map((days, i) => {
+          const d = new Date(today);
+          d.setDate(today.getDate() + days);
+          const amount = i === 3 ? parseFloat((total - instalment * 3).toFixed(2)) : instalment;
+          return (
+            <div key={days} className="flex items-center justify-between px-4 py-2.5 text-xs">
+              <span className="text-ink font-medium">{i === 0 ? 'Today' : `Payment ${i + 1}`}</span>
+              <span className="text-ink-muted">{fmt(d)}</span>
+              <span className="font-semibold tabular-nums">{formatGBP(amount)}</span>
+            </div>
+          );
+        })}
+      </div>
+      <button
+        type="button"
+        onClick={onPay}
+        disabled={paying}
+        className="w-full py-3.5 flex items-center justify-center gap-2 text-sm font-semibold uppercase tracking-widest disabled:opacity-60 bg-[#B2FCE4] text-black hover:bg-[#8af5d0] transition-colors"
+      >
+        <Lock size={14} />
+        {paying ? 'Processing…' : `Pay with Clearpay — ${formatGBP(instalment)} today`}
+      </button>
+    </div>
+  );
+}
+
+// ── Bank Transfer form ────────────────────────────────────────────────────────
+
+function BankTransferForm({ onPay, paying }: { onPay: () => void; paying: boolean }) {
+  return (
+    <div className="space-y-4">
+      <p className="text-xs text-ink-muted">
+        Your order will be reserved while we await your bank transfer. Full payment instructions — including sort code, account number, and reference — will be emailed to you immediately after placing your order.
+      </p>
+      <div className="bg-gold/5 border border-gold/20 p-4 space-y-2 text-sm">
+        <p className="text-xs uppercase tracking-widest text-ink-muted font-semibold mb-3">Bank Details</p>
+        <div className="flex justify-between text-xs">
+          <span className="text-ink-muted">Account Name</span>
+          <span className="font-medium text-ink">BRM Jewellery Ltd</span>
+        </div>
+        <div className="flex justify-between text-xs">
+          <span className="text-ink-muted">Sort Code</span>
+          <span className="font-mono font-medium text-ink">20-00-00</span>
+        </div>
+        <div className="flex justify-between text-xs">
+          <span className="text-ink-muted">Account Number</span>
+          <span className="font-mono font-medium text-ink">12345678</span>
+        </div>
+        <div className="flex justify-between text-xs">
+          <span className="text-ink-muted">Reference</span>
+          <span className="font-medium text-ink">Your order number (emailed)</span>
+        </div>
+      </div>
+      <button
+        type="button"
+        onClick={onPay}
+        disabled={paying}
+        className="w-full btn-gold py-3.5 flex items-center justify-center gap-2 text-sm uppercase tracking-widest disabled:opacity-60"
+      >
+        <Lock size={14} />
+        {paying ? 'Processing…' : 'Place Order — Pay by Bank Transfer'}
+      </button>
+    </div>
   );
 }
 
 // ── Main checkout page ────────────────────────────────────────────────────────
+
 export default function CheckoutPage() {
   const router = useRouter();
   const { user, loading: authLoading } = useAuth();
   const { items, subtotal, count, clearCart } = useCart();
 
   const [step, setStep] = useState<'address' | 'payment'>('address');
-  const [paymentMethod, setPaymentMethod] = useState<'stripe' | 'paypal'>('stripe');
+  const [selectedMethod, setSelectedMethod] = useState<PaymentMethod>('visa');
   const [delivery, setDelivery] = useState('STANDARD');
-  const [clientSecret, setClientSecret] = useState('');
-  const [fetchingIntent, setFetchingIntent] = useState(false);
   const [orderId, setOrderId] = useState('');
   const [creating, setCreating] = useState(false);
+  const [paying, setPaying] = useState(false);
   const [summaryOpen, setSummaryOpen] = useState(false);
 
-  const [address, setAddress] = useState({ firstName: '', lastName: '', line1: '', line2: '', city: '', county: '', postcode: '', country: 'GB' });
-  const setField = (k: string) => (e: React.ChangeEvent<HTMLInputElement>) => setAddress((a) => ({ ...a, [k]: e.target.value }));
+  const [address, setAddress] = useState({
+    firstName: '', lastName: '', line1: '', line2: '',
+    city: '', county: '', postcode: '', country: 'GB',
+  });
+  const setField = (k: string) => (e: React.ChangeEvent<HTMLInputElement>) =>
+    setAddress((a) => ({ ...a, [k]: e.target.value }));
 
   useEffect(() => {
-    if (!authLoading && !user) router.push(`/login?redirect=/checkout`);
+    if (!authLoading && !user) router.push('/login?redirect=/checkout');
   }, [user, authLoading, router]);
 
   useEffect(() => {
     if (!authLoading && count === 0) router.push('/cart');
   }, [count, authLoading, router]);
-
-  // Lazy-fetch Stripe intent only when Stripe tab is active on payment step
-  useEffect(() => {
-    if (step === 'payment' && paymentMethod === 'stripe' && orderId && !clientSecret) {
-      setFetchingIntent(true);
-      paymentApi.createIntent(orderId)
-        .then((res) => setClientSecret(res.data.data.clientSecret))
-        .catch(() => toast.error('Failed to initialise payment'))
-        .finally(() => setFetchingIntent(false));
-    }
-  }, [step, paymentMethod, orderId, clientSecret]);
 
   const selectedDelivery = DELIVERY_OPTIONS.find((d) => d.value === delivery)!;
   const shippingCost = selectedDelivery.price(subtotal);
@@ -144,26 +382,57 @@ export default function CheckoutPage() {
     try {
       const orderRes = await userOrderApi.create({
         items: items.map((i) => ({ productId: i.productId, quantity: i.quantity })),
-        shippingAddress: { line1: address.line1, line2: address.line2 || undefined, city: address.city, county: address.county || undefined, postcode: address.postcode, country: address.country },
+        shippingAddress: {
+          line1: address.line1,
+          line2: address.line2 || undefined,
+          city: address.city,
+          county: address.county || undefined,
+          postcode: address.postcode,
+          country: address.country,
+        },
         deliveryMethod: delivery,
       });
       setOrderId(orderRes.data.data.id);
       setStep('payment');
     } catch (err: unknown) {
       toast.error((err as { response?: { data?: { message?: string } } })?.response?.data?.message || 'Failed to create order');
-    } finally { setCreating(false); }
+    } finally {
+      setCreating(false);
+    }
   };
 
-  const handlePaymentSuccess = () => {
+  const handlePaymentSuccess = useCallback(() => {
     clearCart();
     router.push(`/checkout/success?orderId=${orderId}`);
-  };
+  }, [clearCart, router, orderId]);
+
+  const handlePay = useCallback(async () => {
+    setPaying(true);
+    try {
+      await paymentApi.process(orderId, selectedMethod);
+      handlePaymentSuccess();
+    } catch (err: unknown) {
+      toast.error((err as { response?: { data?: { message?: string } } })?.response?.data?.message || 'Payment failed. Please try again.');
+      setPaying(false);
+    }
+  }, [orderId, selectedMethod, handlePaymentSuccess]);
 
   if (authLoading || count === 0) return (
     <div className="min-h-screen flex items-center justify-center">
       <div className="w-8 h-8 border-2 border-gold border-t-transparent rounded-full animate-spin" />
     </div>
   );
+
+  const isPending = PENDING_METHODS.includes(selectedMethod);
+
+  const securityNote = (() => {
+    if (CARD_METHODS.includes(selectedMethod)) return 'Card details collected for identity verification — payment via secure terminal';
+    if (selectedMethod === 'apple_pay') return 'Apple Pay — payment collected via our secure in-store terminal';
+    if (selectedMethod === 'klarna') return 'Klarna Pay in 3 — 3 interest-free bank transfer instalments';
+    if (selectedMethod === 'clearpay') return 'Clearpay — 4 interest-free bank transfer payments';
+    if (selectedMethod === 'bank_transfer') return 'Bank transfer — payment instructions sent by email';
+    return '';
+  })();
 
   const OrderSummary = () => (
     <div className="space-y-3 text-sm">
@@ -205,7 +474,6 @@ export default function CheckoutPage() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-10">
-        {/* Form */}
         <div className="lg:col-span-3">
 
           {/* ── Step 1: Address + Delivery ── */}
@@ -249,7 +517,8 @@ export default function CheckoutPage() {
                 </div>
               </div>
 
-              <button type="submit" disabled={creating} className="w-full btn-gold py-3.5 flex items-center justify-center gap-2 text-sm uppercase tracking-widest disabled:opacity-60">
+              <button type="submit" disabled={creating}
+                className="w-full btn-gold py-3.5 flex items-center justify-center gap-2 text-sm uppercase tracking-widest disabled:opacity-60">
                 {creating ? 'Creating Order…' : `Continue to Payment — ${formatGBP(total)}`}
               </button>
             </form>
@@ -260,84 +529,66 @@ export default function CheckoutPage() {
             <div>
               <h2 className="text-sm font-semibold uppercase tracking-widest text-ink mb-5">Payment Method</h2>
 
-              {/* Method selector */}
-              <div className="grid grid-cols-2 gap-2 mb-6">
-                {/* Stripe tab */}
-                <button
-                  type="button"
-                  onClick={() => setPaymentMethod('stripe')}
-                  className={`flex flex-col items-center gap-2 p-4 border transition-colors ${paymentMethod === 'stripe' ? 'border-gold bg-gold/5' : 'border-gold/10 hover:border-gold/30'}`}
-                >
-                  <CreditCard size={20} className={paymentMethod === 'stripe' ? 'text-gold' : 'text-ink-muted'} />
-                  <span className="text-xs font-medium text-ink">Card / Wallet</span>
-                  <div className="flex flex-wrap justify-center gap-1">
-                    {['Visa', 'MC', 'Apple Pay', 'Klarna', 'Clearpay'].map((b) => (
-                      <span key={b} className="text-[9px] border border-gold/20 px-1 py-0.5 text-ink-muted rounded-sm">{b}</span>
-                    ))}
-                  </div>
-                </button>
-
-                {/* PayPal tab */}
-                <button
-                  type="button"
-                  onClick={() => setPaymentMethod('paypal')}
-                  className={`flex flex-col items-center gap-2 p-4 border transition-colors ${paymentMethod === 'paypal' ? 'border-[#009CDE] bg-[#009CDE]/5' : 'border-gold/10 hover:border-gold/30'}`}
-                >
-                  <svg viewBox="0 0 101 32" className="h-5 w-auto" aria-label="PayPal">
-                    <path fill="#003087" d="M12.237 2.6H5.854C5.4 2.6 5.013 2.935 4.94 3.383L2.31 19.93a.782.782 0 0 0 .772.903h3.04c.454 0 .841-.335.913-.783l.682-4.326a.923.923 0 0 1 .913-.783h2.014c4.19 0 6.607-2.028 7.238-6.045.285-1.757.012-3.136-.81-4.103-.902-1.064-2.5-1.192-4.835-1.192zm.734 5.956c-.347 2.277-2.09 2.277-3.776 2.277h-.96l.673-4.26a.554.554 0 0 1 .547-.468h.44c1.148 0 2.23 0 2.789.654.335.39.437.971.287 1.797z"/>
-                    <path fill="#003087" d="M35.29 8.47H32.24a.554.554 0 0 0-.547.468l-.14.893-.222-.323c-.688-1-2.22-1.332-3.75-1.332-3.51 0-6.51 2.66-7.094 6.39-.304 1.862.127 3.642 1.18 4.883.968 1.14 2.35 1.614 3.997 1.614 2.829 0 4.399-1.82 4.399-1.82l-.142.888a.782.782 0 0 0 .772.903h2.738c.454 0 .841-.335.913-.783l1.643-10.4a.78.78 0 0 0-.771-.78zm-4.243 6.18c-.307 1.81-1.747 3.026-3.576 3.026-.92 0-1.656-.296-2.128-.856-.47-.556-.646-1.35-.498-2.233.285-1.795 1.747-3.048 3.55-3.048.9 0 1.63.3 2.11.864.483.57.673 1.367.542 2.247z"/>
-                    <path fill="#003087" d="M55.43 8.47h-3.062a.928.928 0 0 0-.766.403l-4.42 6.51-1.873-6.256a.93.93 0 0 0-.89-.657h-3.01a.552.552 0 0 0-.524.733l3.527 10.35-3.316 4.678a.552.552 0 0 0 .45.873h3.058a.926.926 0 0 0 .762-.397l10.65-15.38a.55.55 0 0 0-.586-.857z"/>
-                    <path fill="#009CDE" d="M67.075 2.6H60.69c-.454 0-.84.335-.913.783L57.147 19.93a.782.782 0 0 0 .772.903h3.261c.318 0 .589-.231.639-.547l.726-4.562a.923.923 0 0 1 .913-.783h2.014c4.19 0 6.607-2.028 7.238-6.045.285-1.757.012-3.136-.81-4.103-.902-1.065-2.5-1.192-4.825-1.192zm.734 5.956c-.347 2.277-2.09 2.277-3.776 2.277h-.96l.672-4.26a.554.554 0 0 1 .547-.468h.44c1.148 0 2.23 0 2.789.654.335.39.436.971.288 1.797z"/>
-                    <path fill="#009CDE" d="M90.13 8.47h-3.047a.554.554 0 0 0-.547.468l-.14.893-.223-.323c-.688-1-2.22-1.332-3.75-1.332-3.51 0-6.51 2.66-7.094 6.39-.303 1.862.128 3.642 1.18 4.883.97 1.14 2.35 1.614 3.998 1.614 2.829 0 4.399-1.82 4.399-1.82l-.142.888a.782.782 0 0 0 .772.903h2.738c.454 0 .841-.335.913-.783l1.643-10.4a.782.782 0 0 0-.772-.781zm-4.242 6.18c-.307 1.81-1.748 3.026-3.577 3.026-.919 0-1.655-.296-2.127-.856-.47-.556-.647-1.35-.498-2.233.284-1.795 1.747-3.048 3.55-3.048.9 0 1.63.3 2.11.864.482.57.673 1.367.542 2.247z"/>
-                    <path fill="#009CDE" d="M95.354 3.03l-2.662 16.9a.782.782 0 0 0 .772.903h2.617c.454 0 .841-.335.913-.783L99.628 3.5a.782.782 0 0 0-.772-.903h-2.955a.554.554 0 0 0-.547.433z"/>
-                  </svg>
-                  <span className="text-xs font-medium text-ink">PayPal</span>
-                  <span className="text-[9px] border border-blue-200 px-1 py-0.5 text-ink-muted rounded-sm">PayPal checkout</span>
-                </button>
+              {/* Payment method grid */}
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 mb-6">
+                {PAYMENT_METHODS.map((method) => (
+                  <button
+                    key={method.id}
+                    type="button"
+                    onClick={() => setSelectedMethod(method.id)}
+                    className={`flex flex-col items-center gap-2 p-3 border transition-colors text-center ${
+                      selectedMethod === method.id
+                        ? 'border-gold bg-gold/5'
+                        : 'border-gold/10 hover:border-gold/30'
+                    }`}
+                  >
+                    <div className="h-7 flex items-center justify-center">{method.icon}</div>
+                    <span className="text-xs font-semibold text-ink leading-tight">{method.label}</span>
+                    <span className="text-[10px] text-ink-muted leading-tight">{method.sub}</span>
+                  </button>
+                ))}
               </div>
 
-              {/* Stripe */}
-              {paymentMethod === 'stripe' && (
-                <div>
-                  <div className="flex items-center gap-1.5 text-xs text-ink-muted mb-5">
-                    <Lock size={11} /> Secured by Stripe — your card details are encrypted
-                  </div>
-                  {fetchingIntent ? (
-                    <div className="flex items-center justify-center py-10">
-                      <div className="w-6 h-6 border-2 border-gold border-t-transparent rounded-full animate-spin" />
-                    </div>
-                  ) : clientSecret ? (
-                    <Elements stripe={stripePromise} options={{
-                      clientSecret,
-                      locale: 'en-GB',
-                      appearance: {
-                        theme: 'stripe',
-                        variables: { colorPrimary: '#C9A84C', fontFamily: 'Didact Gothic, sans-serif', borderRadius: '2px' },
-                      },
-                    }}>
-                      <StripePaymentForm orderId={orderId} />
-                    </Elements>
-                  ) : null}
+              {/* Security note */}
+              <div className="flex items-center gap-1.5 text-xs text-ink-muted mb-5">
+                <Lock size={11} />
+                <span>{securityNote}</span>
+              </div>
+
+              {/* Pending order notice */}
+              {isPending && (
+                <div className="bg-amber-50 border border-amber-200 text-amber-800 text-xs px-4 py-3 mb-5 rounded-sm">
+                  Your order will be reserved and a confirmation email sent immediately. Please complete the bank transfer within 3 days to confirm your order.
                 </div>
               )}
 
-              {/* PayPal */}
-              {paymentMethod === 'paypal' && (
-                <div>
-                  <div className="flex items-center gap-1.5 text-xs text-ink-muted mb-5">
-                    <Lock size={11} /> You will be redirected to PayPal to complete your payment securely
-                  </div>
-                  <PayPalScriptProvider options={{
-                    clientId: process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID || '',
-                    currency: 'GBP',
-                    intent: 'capture',
-                  }}>
-                    <PayPalCheckoutButtons orderId={orderId} onSuccess={handlePaymentSuccess} />
-                  </PayPalScriptProvider>
-                </div>
+              {/* ── Card forms (Visa / Mastercard) ── */}
+              {CARD_METHODS.includes(selectedMethod) && (
+                <CardForm method={selectedMethod} total={total} onPay={handlePay} paying={paying} />
               )}
 
-              <button type="button" onClick={() => setStep('address')} className="mt-5 text-xs text-ink-muted hover:text-gold transition-colors">
+              {/* ── Apple Pay ── */}
+              {selectedMethod === 'apple_pay' && (
+                <ApplePayButton total={total} onPay={handlePay} paying={paying} />
+              )}
+
+              {/* ── Klarna ── */}
+              {selectedMethod === 'klarna' && (
+                <KlarnaForm total={total} onPay={handlePay} paying={paying} />
+              )}
+
+              {/* ── Clearpay ── */}
+              {selectedMethod === 'clearpay' && (
+                <ClearpayForm total={total} onPay={handlePay} paying={paying} />
+              )}
+
+              {/* ── Bank Transfer ── */}
+              {selectedMethod === 'bank_transfer' && (
+                <BankTransferForm onPay={handlePay} paying={paying} />
+              )}
+
+              <button type="button" onClick={() => setStep('address')}
+                className="mt-5 text-xs text-ink-muted hover:text-gold transition-colors">
                 ← Back to delivery
               </button>
             </div>
@@ -346,14 +597,14 @@ export default function CheckoutPage() {
 
         {/* Order Summary — right column */}
         <div className="lg:col-span-2">
-          <button onClick={() => setSummaryOpen(!summaryOpen)} className="lg:hidden w-full flex items-center justify-between border border-gold/10 p-4 mb-4 text-sm">
+          <button onClick={() => setSummaryOpen(!summaryOpen)}
+            className="lg:hidden w-full flex items-center justify-between border border-gold/10 p-4 mb-4 text-sm">
             <span className="font-medium">Order Summary ({count} items)</span>
             <div className="flex items-center gap-2">
               <span className="font-semibold">{formatGBP(total)}</span>
               {summaryOpen ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
             </div>
           </button>
-
           <div className={`lg:block border border-gold/10 p-5 ${summaryOpen ? 'block' : 'hidden lg:block'}`}>
             <h2 className="text-xs uppercase tracking-widest text-ink mb-4 hidden lg:block">Order Summary</h2>
             <OrderSummary />

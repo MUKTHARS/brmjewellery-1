@@ -1,8 +1,11 @@
 import api from './axiosInstance';
 
 export const paymentApi = {
-  createIntent: (orderId: string) =>
-    api.post('/payment/create-intent', { orderId }),
-  refund: (orderId: string, amount?: number, reason?: string) =>
-    api.post('/payment/refund', { orderId, amount, reason }),
+  // Single endpoint — method selects the payment flow on the backend
+  process: (orderId: string, method: string) =>
+    api.post('/payment/process', { orderId, method }),
+
+  // Admin only
+  refund: (orderId: string) =>
+    api.post('/payment/refund', { orderId }),
 };

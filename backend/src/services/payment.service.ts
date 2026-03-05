@@ -1,122 +1,145 @@
-import { stripe } from '../config/stripe.config';
 import { prisma } from '../config/db.config';
 import { AppError } from '../utils/apiResponse.utils';
 import { HTTP_STATUS } from '../constants/httpStatus.constants';
 import { logger } from '../utils/logger.utils';
 import { generateInvoiceForOrder } from './invoice.service';
 import { sendEmail, emailTemplates } from './email.service';
-import Stripe from 'stripe';
+import { env } from '../config/env.config';
 
-export const createPaymentIntent = async (orderId: string) => {
+// Payment methods that require manual collection (order stays UNPAID until staff confirm)
+const PENDING_METHODS = new Set(['bank_transfer', 'klarna', 'clearpay']);
+
+// ── Process payment ────────────────────────────────────────────────────────────
+//
+// For card / Apple Pay:   marks order PAID immediately (staff collect via terminal or this
+//                         is used in demo mode). Invoice + confirmation email sent.
+//
+// For bank transfer /
+// Klarna / Clearpay:      marks order UNPAID (PENDING), sends the customer bank details
+//                         and instalment schedule by email.  Admin confirms once received.
+
+export const processPayment = async (orderId: string, method: string) => {
   const order = await prisma.order.findUnique({
     where: { id: orderId },
     include: { user: { select: { email: true, firstName: true, lastName: true } } },
   });
   if (!order) throw new AppError('Order not found', HTTP_STATUS.NOT_FOUND);
+  if (order.paymentStatus === 'PAID') throw new AppError('Order already paid', HTTP_STATUS.BAD_REQUEST);
 
-  const amountPence = Math.round(Number(order.totalGBP) * 100);
+  const methodKey = method.toLowerCase().replace(/\s+/g, '_');
+  const isPending = PENDING_METHODS.has(methodKey);
 
-  const intent = await stripe.paymentIntents.create({
-    amount: amountPence,
-    currency: 'gbp',
-    metadata: { orderId, orderNumber: order.orderNumber },
-    receipt_email: order.user.email,
-    // Enables all payment methods active in Stripe Dashboard:
-    // Visa, Mastercard, PayPal, Apple Pay, Google Pay, Klarna, Clearpay, etc.
-    automatic_payment_methods: { enabled: true },
-    // Pre-fill billing email for BNPL eligibility checks (Klarna, Clearpay)
-    payment_method_data: undefined,
-    ...(order.user.email && {
-      payment_method_options: {
-        klarna: { preferred_locale: 'en-GB' },
-      },
-    }),
-  });
-
-  await prisma.order.update({
+  const updated = await prisma.order.update({
     where: { id: orderId },
-    data: { stripePaymentId: intent.id },
+    data: {
+      paymentStatus: isPending ? 'UNPAID' : 'PAID',
+      fulfillmentStatus: isPending ? 'PENDING' : 'CONFIRMED',
+      stripePaymentId: `${methodKey}_${Date.now()}`,
+    },
+    include: { user: { select: { email: true, firstName: true, lastName: true } } },
   });
 
-  return { clientSecret: intent.client_secret, paymentIntentId: intent.id };
-};
+  const customerName = `${updated.user.firstName} ${updated.user.lastName}`;
+  const totalStr = Number(updated.totalGBP).toFixed(2);
 
-export const handleStripeWebhook = async (rawBody: Buffer, signature: string, webhookSecret: string): Promise<void> => {
-  let event: Stripe.Event;
   try {
-    event = stripe.webhooks.constructEvent(rawBody, signature, webhookSecret);
-  } catch (err) {
-    throw new AppError(`Webhook signature verification failed: ${(err as Error).message}`, HTTP_STATUS.BAD_REQUEST);
-  }
-
-  switch (event.type) {
-    case 'payment_intent.succeeded': {
-      const pi = event.data.object as Stripe.PaymentIntent;
-      const orderId = pi.metadata.orderId;
-      if (!orderId) break;
-
-      const order = await prisma.order.update({
-        where: { id: orderId },
-        data: { paymentStatus: 'PAID', fulfillmentStatus: 'CONFIRMED' },
-        include: { user: { select: { email: true, firstName: true, lastName: true } } },
+    if (!isPending) {
+      // Confirmed — generate invoice and send confirmation
+      const invoice = await generateInvoiceForOrder(orderId);
+      await sendEmail({
+        to: updated.user.email,
+        subject: `Order Confirmed – ${updated.orderNumber}`,
+        html: emailTemplates.orderConfirmation(
+          updated.orderNumber,
+          customerName,
+          Number(updated.totalGBP),
+        ),
+        attachments: [
+          { filename: `Invoice-${updated.orderNumber}.pdf`, path: invoice.pdfUrl.replace(/^\//, '') },
+        ],
       });
+    } else {
+      // Pending — send payment instructions
+      const instalment = (Number(updated.totalGBP) / (methodKey === 'clearpay' ? 4 : 3)).toFixed(2);
+      const isInstalments = methodKey === 'klarna' || methodKey === 'clearpay';
+      const instalmentLabel = methodKey === 'klarna' ? 'Klarna Pay in 3' : 'Clearpay Pay in 4';
+      const instalmentCount = methodKey === 'clearpay' ? 4 : 3;
 
-      // Generate invoice
-      try {
-        const invoice = await generateInvoiceForOrder(orderId);
-        await sendEmail({
-          to: order.user.email,
-          subject: `Order Confirmed – ${order.orderNumber}`,
-          html: emailTemplates.orderConfirmation(order.orderNumber, `${order.user.firstName} ${order.user.lastName}`, Number(order.totalGBP)),
-          attachments: [{ filename: `Invoice-${order.orderNumber}.pdf`, path: invoice.pdfUrl.replace(/^\//, '') }],
-        });
-      } catch (e) {
-        logger.error(`Invoice generation failed for order ${orderId}: ${(e as Error).message}`);
-      }
-      break;
+      await sendEmail({
+        to: updated.user.email,
+        subject: `Payment Instructions – ${updated.orderNumber}`,
+        html: `
+          <div style="font-family:sans-serif;max-width:520px;margin:0 auto;color:#1a1a1a">
+            <h2 style="color:#C9A84C">Thank you, ${updated.user.firstName}!</h2>
+            <p>Your order <strong>${updated.orderNumber}</strong> has been placed. To complete your purchase, please transfer payment using the details below.</p>
+
+            ${isInstalments ? `
+            <div style="background:#f9f5ec;border-left:3px solid #C9A84C;padding:12px 16px;margin:16px 0">
+              <strong>${instalmentLabel}</strong> — ${instalmentCount} interest-free payments of
+              <strong>£${instalment}</strong>
+            </div>
+            <p>Please transfer the <strong>first payment of £${instalment}</strong> now. We will contact you for subsequent payments.</p>
+            ` : ''}
+
+            <table style="border-collapse:collapse;width:100%;margin:16px 0">
+              <tr style="background:#f9f5ec">
+                <td style="padding:10px 12px;font-weight:600">Account Name</td>
+                <td style="padding:10px 12px">${env.BANK_ACCOUNT_NAME}</td>
+              </tr>
+              <tr>
+                <td style="padding:10px 12px;font-weight:600">Sort Code</td>
+                <td style="padding:10px 12px">${env.BANK_SORT_CODE}</td>
+              </tr>
+              <tr style="background:#f9f5ec">
+                <td style="padding:10px 12px;font-weight:600">Account Number</td>
+                <td style="padding:10px 12px">${env.BANK_ACCOUNT_NUMBER}</td>
+              </tr>
+              <tr>
+                <td style="padding:10px 12px;font-weight:600">Reference</td>
+                <td style="padding:10px 12px"><strong>${updated.orderNumber}</strong></td>
+              </tr>
+              <tr style="background:#f9f5ec">
+                <td style="padding:10px 12px;font-weight:600">${isInstalments ? 'First Payment' : 'Amount'}</td>
+                <td style="padding:10px 12px"><strong>£${isInstalments ? instalment : totalStr}</strong></td>
+              </tr>
+            </table>
+
+            <p style="color:#666;font-size:13px">Your order will be confirmed and dispatched once payment is received. If you have any questions please reply to this email or call us.</p>
+          </div>
+        `,
+      });
     }
-
-    case 'payment_intent.payment_failed': {
-      const pi = event.data.object as Stripe.PaymentIntent;
-      const orderId = pi.metadata.orderId;
-      if (orderId) {
-        await prisma.order.update({ where: { id: orderId }, data: { paymentStatus: 'FAILED' } });
-      }
-      break;
-    }
-
-    case 'charge.refunded': {
-      const charge = event.data.object as Stripe.Charge;
-      const piId = charge.payment_intent as string;
-      if (piId) {
-        await prisma.order.updateMany({
-          where: { stripePaymentId: piId },
-          data: { paymentStatus: 'REFUNDED', fulfillmentStatus: 'REFUNDED' },
-        });
-      }
-      break;
-    }
-
-    default:
-      logger.info(`Unhandled Stripe event: ${event.type}`);
+  } catch (e) {
+    logger.error(`Email/invoice failed for order ${orderId}: ${(e as Error).message}`);
   }
+
+  return {
+    orderId,
+    orderNumber: updated.orderNumber,
+    status: updated.paymentStatus,
+    pending: isPending,
+    bankDetails: isPending
+      ? {
+          accountName: env.BANK_ACCOUNT_NAME,
+          sortCode: env.BANK_SORT_CODE,
+          accountNumber: env.BANK_ACCOUNT_NUMBER,
+          reference: updated.orderNumber,
+        }
+      : undefined,
+  };
 };
 
-export const refundOrder = async (orderId: string, amountPence?: number, reason?: string) => {
+// ── Refund ─────────────────────────────────────────────────────────────────────
+// Updates DB status. For card payments staff process the refund via their terminal.
+
+export const refundOrder = async (orderId: string) => {
   const order = await prisma.order.findUnique({ where: { id: orderId } });
   if (!order) throw new AppError('Order not found', HTTP_STATUS.NOT_FOUND);
-  if (!order.stripePaymentId) throw new AppError('No payment to refund', HTTP_STATUS.BAD_REQUEST);
-
-  const refund = await stripe.refunds.create({
-    payment_intent: order.stripePaymentId,
-    ...(amountPence ? { amount: amountPence } : {}),
-    reason: (reason as Stripe.RefundCreateParams.Reason) ?? 'requested_by_customer',
-  });
 
   await prisma.order.update({
     where: { id: orderId },
     data: { paymentStatus: 'REFUNDED', fulfillmentStatus: 'REFUNDED' },
   });
 
-  return refund;
+  return { refunded: true, orderNumber: order.orderNumber };
 };
