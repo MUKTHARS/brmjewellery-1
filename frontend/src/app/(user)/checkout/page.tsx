@@ -1,12 +1,14 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
+import { PayPalScriptProvider, PayPalButtons, usePayPalScriptReducer } from '@paypal/react-paypal-js';
 import { Lock, ChevronDown, ChevronUp, Building2 } from 'lucide-react';
 import { useCart } from '@/contexts/CartContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { userOrderApi } from '@/api/order.user.api';
 import { paymentApi } from '@/api/payment.api';
+import { paypalApi } from '@/api/paypal.api';
 import { formatGBP } from '@/lib/formatCurrency';
 import toast from 'react-hot-toast';
 
@@ -16,30 +18,34 @@ type PaymentMethod =
   | 'visa'
   | 'mastercard'
   | 'apple_pay'
+  | 'google_pay'
+  | 'paypal'
   | 'klarna'
   | 'clearpay'
   | 'bank_transfer';
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 
-const FREE_SHIPPING_THRESHOLD = 100;
-const SHIPPING_COST = 5.99;
 const VAT_RATE = 0.2;
 
-const DELIVERY_OPTIONS = [
-  { value: 'STANDARD', label: 'Standard Delivery', sub: '3–5 working days', price: (sub: number) => sub >= FREE_SHIPPING_THRESHOLD ? 0 : SHIPPING_COST },
-  { value: 'EXPRESS', label: 'Express Delivery', sub: '1–2 working days', price: () => 9.99 },
-  { value: 'NEXT_DAY', label: 'Next Day', sub: 'Order before 1pm', price: () => 14.99 },
-];
-
 const CARD_METHODS: PaymentMethod[] = ['visa', 'mastercard'];
-const PENDING_METHODS: PaymentMethod[] = ['klarna', 'clearpay', 'bank_transfer'];
+
+// ── Script loader ─────────────────────────────────────────────────────────────
+
+const loadScript = (src: string, id: string): Promise<void> =>
+  new Promise((resolve, reject) => {
+    if (document.getElementById(id)) { resolve(); return; }
+    const s = document.createElement('script');
+    s.src = src; s.id = id;
+    s.onload = () => resolve(); s.onerror = reject;
+    document.head.appendChild(s);
+  });
 
 // ── Payment method metadata ───────────────────────────────────────────────────
 
-const PAYMENT_METHODS = [
+const PAYMENT_METHODS: { id: PaymentMethod; label: string; sub: string; icon: React.ReactNode }[] = [
   {
-    id: 'visa' as PaymentMethod,
+    id: 'visa',
     label: 'Visa',
     sub: 'Credit & debit',
     icon: (
@@ -54,7 +60,7 @@ const PAYMENT_METHODS = [
     ),
   },
   {
-    id: 'mastercard' as PaymentMethod,
+    id: 'mastercard',
     label: 'Mastercard',
     sub: 'Credit & debit',
     icon: (
@@ -66,7 +72,7 @@ const PAYMENT_METHODS = [
     ),
   },
   {
-    id: 'apple_pay' as PaymentMethod,
+    id: 'apple_pay',
     label: 'Apple Pay',
     sub: 'Touch ID / Face ID',
     icon: (
@@ -78,7 +84,38 @@ const PAYMENT_METHODS = [
     ),
   },
   {
-    id: 'klarna' as PaymentMethod,
+    id: 'google_pay',
+    label: 'Google Pay',
+    sub: 'Pay with Google',
+    icon: (
+      <svg viewBox="0 0 41 17" className="h-5 w-auto" aria-label="Google Pay">
+        <text x="0" y="13" fontFamily="system-ui" fontSize="13" fontWeight="600" fill="#5F6368">G</text>
+        <text x="9" y="13" fontFamily="system-ui" fontSize="13" fontWeight="400" fill="#5F6368">oogle </text>
+        <text x="0" y="13" dx="50" fontFamily="system-ui" fontSize="13" fontWeight="600" fill="#5F6368" visibility="hidden">Pay</text>
+        <svg x="0" y="0" viewBox="0 0 100 40">
+          <text x="2" y="28" fontFamily="sans-serif" fontSize="24" fontWeight="700">
+            <tspan fill="#4285F4">G</tspan><tspan fill="#EA4335">o</tspan><tspan fill="#FBBC05">o</tspan><tspan fill="#4285F4">g</tspan><tspan fill="#34A853">l</tspan><tspan fill="#EA4335">e</tspan>
+            <tspan fill="#5F6368" fontWeight="400"> Pay</tspan>
+          </text>
+        </svg>
+      </svg>
+    ),
+  },
+  {
+    id: 'paypal',
+    label: 'PayPal',
+    sub: 'Fast & secure',
+    icon: (
+      <svg viewBox="0 0 101 32" className="h-5 w-auto" aria-label="PayPal">
+        <path fill="#003087" d="M12.237 2.6H5.854C5.4 2.6 5.013 2.935 4.94 3.383L2.31 19.93a.782.782 0 0 0 .772.903h3.04c.454 0 .841-.335.913-.783l.682-4.326a.923.923 0 0 1 .913-.783h2.014c4.19 0 6.607-2.028 7.238-6.045.285-1.757.012-3.136-.81-4.103-.902-1.064-2.5-1.192-4.835-1.192zm.734 5.956c-.347 2.277-2.09 2.277-3.776 2.277h-.96l.673-4.26a.554.554 0 0 1 .547-.468h.44c1.148 0 2.23 0 2.789.654.335.39.437.971.287 1.797z"/>
+        <path fill="#003087" d="M35.29 8.47H32.24a.554.554 0 0 0-.547.468l-.14.893-.222-.323c-.688-1-2.22-1.332-3.75-1.332-3.51 0-6.51 2.66-7.094 6.39-.304 1.862.127 3.642 1.18 4.883.968 1.14 2.35 1.614 3.997 1.614 2.829 0 4.399-1.82 4.399-1.82l-.142.888a.782.782 0 0 0 .772.903h2.738c.454 0 .841-.335.913-.783l1.643-10.4a.78.78 0 0 0-.771-.78zm-4.243 6.18c-.307 1.81-1.747 3.026-3.576 3.026-.92 0-1.656-.296-2.128-.856-.47-.556-.646-1.35-.498-2.233.285-1.795 1.747-3.048 3.55-3.048.9 0 1.63.3 2.11.864.483.57.673 1.367.542 2.247z"/>
+        <path fill="#009CDE" d="M67.075 2.6H60.69c-.454 0-.84.335-.913.783L57.147 19.93a.782.782 0 0 0 .772.903h3.261c.318 0 .589-.231.639-.547l.726-4.562a.923.923 0 0 1 .913-.783h2.014c4.19 0 6.607-2.028 7.238-6.045.285-1.757.012-3.136-.81-4.103-.902-1.065-2.5-1.192-4.825-1.192zm.734 5.956c-.347 2.277-2.09 2.277-3.776 2.277h-.96l.672-4.26a.554.554 0 0 1 .547-.468h.44c1.148 0 2.23 0 2.789.654.335.39.436.971.288 1.797z"/>
+        <path fill="#009CDE" d="M95.354 3.03l-2.662 16.9a.782.782 0 0 0 .772.903h2.617c.454 0 .841-.335.913-.783L99.628 3.5a.782.782 0 0 0-.772-.903h-2.955a.554.554 0 0 0-.547.433z"/>
+      </svg>
+    ),
+  },
+  {
+    id: 'klarna',
     label: 'Klarna',
     sub: 'Pay in 3 — interest free',
     icon: (
@@ -89,7 +126,7 @@ const PAYMENT_METHODS = [
     ),
   },
   {
-    id: 'clearpay' as PaymentMethod,
+    id: 'clearpay',
     label: 'Clearpay',
     sub: 'Pay in 4 — interest free',
     icon: (
@@ -100,20 +137,17 @@ const PAYMENT_METHODS = [
     ),
   },
   {
-    id: 'bank_transfer' as PaymentMethod,
+    id: 'bank_transfer',
     label: 'Bank Transfer',
     sub: 'UK bank transfer',
     icon: <Building2 size={24} className="text-ink" />,
   },
 ];
 
-// ── Card form (visual only — payment collected via terminal) ──────────────────
+// ── Card form (visual — payment collected via terminal) ───────────────────────
 
 function CardForm({ method, total, onPay, paying }: {
-  method: PaymentMethod;
-  total: number;
-  onPay: () => void;
-  paying: boolean;
+  method: PaymentMethod; total: number; onPay: () => void; paying: boolean;
 }) {
   const [name, setName] = useState('');
   const [number, setNumber] = useState('');
@@ -127,93 +161,134 @@ function CardForm({ method, total, onPay, paying }: {
     return d.length >= 3 ? `${d.slice(0, 2)} / ${d.slice(2)}` : d;
   };
 
-  const cardLabel = method === 'visa' ? 'Visa' : 'Mastercard';
-
   return (
     <div className="space-y-4">
       <p className="text-xs text-ink-muted">
-        Your card details are used to confirm your identity. Payment will be collected via our secure in-store terminal when your order is fulfilled.
+        Your {method === 'visa' ? 'Visa' : 'Mastercard'} card details are used to confirm your identity. Payment is collected via our secure in-store terminal.
       </p>
       <div>
         <label className="label-base">Name on Card</label>
-        <input
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          placeholder="J. Smith"
-          className="input-base"
-        />
+        <input value={name} onChange={(e) => setName(e.target.value)} placeholder="J. Smith" className="input-base" />
       </div>
       <div>
-        <label className="label-base">{cardLabel} Card Number</label>
-        <input
-          value={number}
-          onChange={(e) => setNumber(formatNumber(e.target.value))}
-          placeholder="1234 5678 9012 3456"
-          inputMode="numeric"
-          maxLength={19}
-          className="input-base font-mono tracking-widest"
-        />
+        <label className="label-base">Card Number</label>
+        <input value={number} onChange={(e) => setNumber(formatNumber(e.target.value))} placeholder="1234 5678 9012 3456" inputMode="numeric" maxLength={19} className="input-base font-mono tracking-widest" />
       </div>
       <div className="grid grid-cols-2 gap-3">
         <div>
-          <label className="label-base">Expiry Date</label>
-          <input
-            value={expiry}
-            onChange={(e) => setExpiry(formatExpiry(e.target.value))}
-            placeholder="MM / YY"
-            inputMode="numeric"
-            maxLength={7}
-            className="input-base"
-          />
+          <label className="label-base">Expiry</label>
+          <input value={expiry} onChange={(e) => setExpiry(formatExpiry(e.target.value))} placeholder="MM / YY" inputMode="numeric" maxLength={7} className="input-base" />
         </div>
         <div>
           <label className="label-base">CVV</label>
-          <input
-            value={cvv}
-            onChange={(e) => setCvv(e.target.value.replace(/\D/g, '').slice(0, 4))}
-            placeholder="123"
-            inputMode="numeric"
-            maxLength={4}
-            className="input-base"
-            type="password"
-          />
+          <input value={cvv} onChange={(e) => setCvv(e.target.value.replace(/\D/g, '').slice(0, 4))} placeholder="123" inputMode="numeric" maxLength={4} className="input-base" type="password" />
         </div>
       </div>
-      <button
-        type="button"
-        onClick={onPay}
-        disabled={paying || !name || number.replace(/\s/g, '').length < 16 || expiry.length < 7 || cvv.length < 3}
-        className="w-full btn-gold py-3.5 flex items-center justify-center gap-2 text-sm uppercase tracking-widest disabled:opacity-60"
-      >
-        <Lock size={14} />
-        {paying ? 'Processing…' : `Pay ${formatGBP(total)}`}
+      <button type="button" onClick={onPay} disabled={paying || !name || number.replace(/\s/g, '').length < 16 || expiry.length < 7 || cvv.length < 3}
+        className="w-full btn-gold py-3.5 flex items-center justify-center gap-2 text-sm uppercase tracking-widest disabled:opacity-60">
+        <Lock size={14} />{paying ? 'Processing…' : `Pay ${formatGBP(total)}`}
       </button>
     </div>
   );
 }
 
-// ── Apple Pay (simulated — marks order PAID, terminal collects) ───────────────
+// ── Apple Pay (Web Payments API) ──────────────────────────────────────────────
 
-function ApplePayButton({ total, onPay, paying }: { total: number; onPay: () => void; paying: boolean }) {
+function ApplePayForm({ total, onSuccess }: { total: number; onSuccess: () => void }) {
+  const [supported, setSupported] = useState<boolean | null>(null);
+  const [paying, setPaying] = useState(false);
+
+  useEffect(() => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    setSupported(!!(window as any).ApplePaySession);
+  }, []);
+
+  const handleApplePay = async () => {
+    setPaying(true);
+    try {
+      const request = new PaymentRequest(
+        [{ supportedMethods: 'https://apple.com/apple-pay', data: { version: 3, merchantIdentifier: 'merchant.com.brmjewellery', merchantCapabilities: ['supports3DS'], supportedNetworks: ['visa', 'masterCard', 'amex'], countryCode: 'GB' } }],
+        { total: { label: 'BRM Jewellery', amount: { currency: 'GBP', value: total.toFixed(2) } } },
+      );
+      const canMake = await request.canMakePayment();
+      if (!canMake) { toast.error('Apple Pay is not available on this device'); setPaying(false); return; }
+      const response = await request.show();
+      await response.complete('success');
+      onSuccess();
+    } catch {
+      toast.error('Apple Pay was cancelled or unavailable');
+      setPaying(false);
+    }
+  };
+
+  if (supported === null) return <div className="flex justify-center py-8"><div className="w-6 h-6 border-2 border-gold border-t-transparent rounded-full animate-spin" /></div>;
+  if (!supported) return (
+    <div className="text-center py-8 text-ink-muted text-sm space-y-2">
+      <p>Apple Pay is not available on this device.</p>
+      <p className="text-xs">Requires Safari on macOS Monterey+ or iOS 16+ with a card added to Wallet.</p>
+    </div>
+  );
+
   return (
     <div className="space-y-4">
-      <p className="text-xs text-ink-muted">
-        Confirm your order and pay quickly using Touch ID or Face ID. Payment is collected via our in-store terminal upon fulfilment.
-      </p>
-      <button
-        type="button"
-        onClick={onPay}
-        disabled={paying}
-        className="w-full bg-black text-white py-3.5 flex items-center justify-center gap-2 text-sm font-semibold disabled:opacity-60 rounded-sm"
-      >
-        {paying ? (
-          <span>Processing…</span>
-        ) : (
+      <p className="text-xs text-ink-muted">Pay with Touch ID or Face ID. Secure and instant.</p>
+      <button type="button" onClick={handleApplePay} disabled={paying}
+        className="w-full bg-black text-white py-3.5 flex items-center justify-center gap-2 text-sm font-semibold disabled:opacity-60 rounded-sm">
+        {paying ? 'Processing…' : `Pay ${formatGBP(total)} with Apple Pay`}
+      </button>
+    </div>
+  );
+}
+
+// ── Google Pay (Web Payments API) ─────────────────────────────────────────────
+
+function GooglePayForm({ total, onSuccess }: { total: number; onSuccess: () => void }) {
+  const [paying, setPaying] = useState(false);
+
+  const handleGooglePay = async () => {
+    setPaying(true);
+    try {
+      const request = new PaymentRequest(
+        [{
+          supportedMethods: 'https://google.com/pay',
+          data: {
+            environment: 'TEST',
+            apiVersion: 2, apiVersionMinor: 0,
+            merchantInfo: { merchantName: 'BRM Jewellery', merchantId: '01234567890123456789' },
+            allowedPaymentMethods: [{
+              type: 'CARD',
+              parameters: { allowedAuthMethods: ['PAN_ONLY', 'CRYPTOGRAM_3DS'], allowedCardNetworks: ['VISA', 'MASTERCARD', 'AMEX'] },
+              tokenizationSpecification: { type: 'PAYMENT_GATEWAY', parameters: { gateway: 'example', gatewayMerchantId: 'exampleGatewayMerchantId' } },
+            }],
+          },
+        }],
+        { total: { label: 'BRM Jewellery', amount: { currency: 'GBP', value: total.toFixed(2) } } },
+      );
+      const canMake = await request.canMakePayment();
+      if (!canMake) { toast.error('Google Pay is not available on this device'); setPaying(false); return; }
+      const response = await request.show();
+      await response.complete('success');
+      onSuccess();
+    } catch {
+      toast.error('Google Pay was cancelled or unavailable');
+      setPaying(false);
+    }
+  };
+
+  return (
+    <div className="space-y-4">
+      <p className="text-xs text-ink-muted">Pay quickly with your saved Google Pay cards. Works on Chrome and Android.</p>
+      <button type="button" onClick={handleGooglePay} disabled={paying}
+        className="w-full bg-white border border-gray-300 text-gray-700 py-3.5 flex items-center justify-center gap-2 text-sm font-semibold disabled:opacity-60 rounded-sm hover:bg-gray-50 transition-colors">
+        {paying ? 'Processing…' : (
           <>
-            <svg viewBox="0 0 20 14" className="h-4 w-auto fill-white" aria-hidden="true">
-              <path d="M10 1.5c-.8 1-2.1 1.8-3.4 1.7-.2-1.3.5-2.7 1.2-3.6C8.7-.3 10.1-.1 10 1.5zm.9 1.7c-1.9-.1-3.5 1.1-4.4 1.1-.9 0-2.3-1-3.8-1C.9 4.4-.1 5.5-.1 7.2c0 3.5 3 8.8 4.6 8.8.9 0 1.3-.6 2.5-.6s1.6.6 2.6.6c1.6 0 4.6-5.1 4.6-8.8 0-2-.9-3.9-3.3-4z"/>
+            <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" aria-hidden="true">
+              <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+              <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+              <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
+              <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
             </svg>
-            <span>Pay {formatGBP(total)} with Apple Pay</span>
+            Pay {formatGBP(total)} with Google Pay
           </>
         )}
       </button>
@@ -221,81 +296,125 @@ function ApplePayButton({ total, onPay, paying }: { total: number; onPay: () => 
   );
 }
 
-// ── Klarna instalment form ────────────────────────────────────────────────────
+// ── PayPal buttons ────────────────────────────────────────────────────────────
 
-function KlarnaForm({ total, onPay, paying }: { total: number; onPay: () => void; paying: boolean }) {
-  const instalment = parseFloat((total / 3).toFixed(2));
-  const today = new Date();
-  const d30 = new Date(today); d30.setDate(today.getDate() + 30);
-  const d60 = new Date(today); d60.setDate(today.getDate() + 60);
-  const fmt = (d: Date) => d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+function PayPalForm({ orderId, onSuccess }: { orderId: string; onSuccess: () => void }) {
+  const [{ isPending }] = usePayPalScriptReducer();
+  if (isPending) return <div className="flex justify-center py-8"><div className="w-6 h-6 border-2 border-gold border-t-transparent rounded-full animate-spin" /></div>;
+  return (
+    <div className="space-y-4">
+      <p className="text-xs text-ink-muted">Pay securely via your PayPal account or any card saved in PayPal.</p>
+      <PayPalButtons
+        style={{ layout: 'vertical', color: 'gold', shape: 'rect', label: 'paypal', height: 48 }}
+        createOrder={async () => {
+          const res = await paypalApi.createOrder(orderId);
+          return res.data.data.paypalOrderId as string;
+        }}
+        onApprove={async (data) => {
+          await paypalApi.captureOrder(data.orderID);
+          onSuccess();
+        }}
+        onError={() => toast.error('PayPal payment failed. Please try again.')}
+        onCancel={() => toast.error('PayPal payment cancelled')}
+      />
+    </div>
+  );
+}
+
+// ── Klarna form ───────────────────────────────────────────────────────────────
+
+function KlarnaForm({ orderId, onSuccess }: { orderId: string; onSuccess: () => void }) {
+  const [loaded, setLoaded] = useState(false);
+  const [paying, setPaying] = useState(false);
+  const [error, setError] = useState('');
+
+  useEffect(() => {
+    let mounted = true;
+    (async () => {
+      try {
+        const res = await paymentApi.createKlarnaSession(orderId);
+        const { clientToken } = res.data.data as { sessionId: string; clientToken: string };
+        await loadScript('https://x.klarnacdn.net/kp/lib/v1/api.js', 'klarna-js');
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const Klarna = (window as any).Klarna;
+        Klarna.Payments.init({ client_token: clientToken });
+        Klarna.Payments.load(
+          { container: '#klarna-payments-container', payment_method_category: 'pay_later' },
+          (res: { show_form: boolean; error?: { invalid_fields: string[] } }) => {
+            if (!mounted) return;
+            if (res.show_form) setLoaded(true);
+            else setError('Klarna is not available for this order');
+          },
+        );
+      } catch {
+        if (mounted) setError('Klarna is not available right now. Please choose another payment method.');
+      }
+    })();
+    return () => { mounted = false; };
+  }, [orderId]);
+
+  const handleAuthorise = () => {
+    setPaying(true);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (window as any).Klarna.Payments.authorize(
+      { payment_method_category: 'pay_later' },
+      async (res: { approved: boolean; authorization_token?: string }) => {
+        if (!res.approved || !res.authorization_token) {
+          toast.error('Klarna authorisation declined');
+          setPaying(false);
+          return;
+        }
+        try {
+          await paymentApi.authorizeKlarna(orderId, res.authorization_token);
+          onSuccess();
+        } catch {
+          toast.error('Klarna payment failed');
+          setPaying(false);
+        }
+      },
+    );
+  };
+
+  if (error) return <p className="text-sm text-red-600 py-4">{error}</p>;
+  if (!loaded) return <div className="flex justify-center py-8"><div className="w-6 h-6 border-2 border-gold border-t-transparent rounded-full animate-spin" /></div>;
 
   return (
     <div className="space-y-4">
-      <p className="text-xs text-ink-muted">
-        Split your purchase into 3 equal interest-free instalments. Bank transfer instructions will be emailed to you.
-      </p>
-      <div className="border border-gold/10 divide-y divide-gold/10">
-        {[
-          { label: 'Today', date: fmt(today), amount: instalment },
-          { label: '2nd payment', date: fmt(d30), amount: instalment },
-          { label: '3rd payment', date: fmt(d60), amount: parseFloat((total - instalment * 2).toFixed(2)) },
-        ].map((row) => (
-          <div key={row.label} className="flex items-center justify-between px-4 py-2.5 text-xs">
-            <span className="text-ink font-medium">{row.label}</span>
-            <span className="text-ink-muted">{row.date}</span>
-            <span className="font-semibold tabular-nums">{formatGBP(row.amount)}</span>
-          </div>
-        ))}
-      </div>
-      <button
-        type="button"
-        onClick={onPay}
-        disabled={paying}
-        className="w-full py-3.5 flex items-center justify-center gap-2 text-sm font-semibold uppercase tracking-widest disabled:opacity-60 bg-[#FFB3C7] text-black hover:bg-[#ff9ab8] transition-colors"
-      >
-        <Lock size={14} />
-        {paying ? 'Processing…' : `Pay with Klarna — ${formatGBP(instalment)} today`}
+      <div id="klarna-payments-container" />
+      <button type="button" onClick={handleAuthorise} disabled={paying}
+        className="w-full py-3.5 flex items-center justify-center gap-2 text-sm font-semibold uppercase tracking-widest disabled:opacity-60 bg-[#FFB3C7] text-black hover:bg-[#ff9ab8] transition-colors">
+        <Lock size={14} />{paying ? 'Processing…' : 'Pay with Klarna'}
       </button>
     </div>
   );
 }
 
-// ── Clearpay instalment form ──────────────────────────────────────────────────
+// ── Clearpay form ─────────────────────────────────────────────────────────────
 
-function ClearpayForm({ total, onPay, paying }: { total: number; onPay: () => void; paying: boolean }) {
+function ClearpayForm({ orderId, total }: { orderId: string; total: number }) {
+  const [loading, setLoading] = useState(false);
   const instalment = parseFloat((total / 4).toFixed(2));
-  const today = new Date();
-  const fmt = (d: Date) => d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
-  const offsets = [0, 14, 28, 42];
+
+  const handleClearpay = async () => {
+    setLoading(true);
+    try {
+      const res = await paymentApi.createClearpayCheckout(orderId);
+      const { redirectCheckoutUrl } = res.data.data as { token: string; redirectCheckoutUrl: string };
+      window.location.href = redirectCheckoutUrl;
+    } catch {
+      toast.error('Clearpay checkout failed. Please try again.');
+      setLoading(false);
+    }
+  };
 
   return (
     <div className="space-y-4">
       <p className="text-xs text-ink-muted">
-        Split your purchase into 4 equal interest-free payments. Bank transfer instructions will be emailed to you.
+        Split into 4 interest-free payments of <strong>{formatGBP(instalment)}</strong>. You will be redirected to Clearpay to complete payment.
       </p>
-      <div className="border border-gold/10 divide-y divide-gold/10">
-        {offsets.map((days, i) => {
-          const d = new Date(today);
-          d.setDate(today.getDate() + days);
-          const amount = i === 3 ? parseFloat((total - instalment * 3).toFixed(2)) : instalment;
-          return (
-            <div key={days} className="flex items-center justify-between px-4 py-2.5 text-xs">
-              <span className="text-ink font-medium">{i === 0 ? 'Today' : `Payment ${i + 1}`}</span>
-              <span className="text-ink-muted">{fmt(d)}</span>
-              <span className="font-semibold tabular-nums">{formatGBP(amount)}</span>
-            </div>
-          );
-        })}
-      </div>
-      <button
-        type="button"
-        onClick={onPay}
-        disabled={paying}
-        className="w-full py-3.5 flex items-center justify-center gap-2 text-sm font-semibold uppercase tracking-widest disabled:opacity-60 bg-[#B2FCE4] text-black hover:bg-[#8af5d0] transition-colors"
-      >
-        <Lock size={14} />
-        {paying ? 'Processing…' : `Pay with Clearpay — ${formatGBP(instalment)} today`}
+      <button type="button" onClick={handleClearpay} disabled={loading}
+        className="w-full py-3.5 flex items-center justify-center gap-2 text-sm font-semibold uppercase tracking-widest disabled:opacity-60 bg-[#B2FCE4] text-black hover:bg-[#8af5d0] transition-colors">
+        <Lock size={14} />{loading ? 'Redirecting to Clearpay…' : `Pay with Clearpay — ${formatGBP(instalment)} today`}
       </button>
     </div>
   );
@@ -306,36 +425,19 @@ function ClearpayForm({ total, onPay, paying }: { total: number; onPay: () => vo
 function BankTransferForm({ onPay, paying }: { onPay: () => void; paying: boolean }) {
   return (
     <div className="space-y-4">
-      <p className="text-xs text-ink-muted">
-        Your order will be reserved while we await your bank transfer. Full payment instructions — including sort code, account number, and reference — will be emailed to you immediately after placing your order.
-      </p>
-      <div className="bg-gold/5 border border-gold/20 p-4 space-y-2 text-sm">
+      <p className="text-xs text-ink-muted">Your order will be reserved. Full payment instructions will be emailed to you immediately.</p>
+      <div className="bg-gold/5 border border-gold/20 p-4 space-y-2">
         <p className="text-xs uppercase tracking-widest text-ink-muted font-semibold mb-3">Bank Details</p>
-        <div className="flex justify-between text-xs">
-          <span className="text-ink-muted">Account Name</span>
-          <span className="font-medium text-ink">BRM Jewellery Ltd</span>
-        </div>
-        <div className="flex justify-between text-xs">
-          <span className="text-ink-muted">Sort Code</span>
-          <span className="font-mono font-medium text-ink">20-00-00</span>
-        </div>
-        <div className="flex justify-between text-xs">
-          <span className="text-ink-muted">Account Number</span>
-          <span className="font-mono font-medium text-ink">12345678</span>
-        </div>
-        <div className="flex justify-between text-xs">
-          <span className="text-ink-muted">Reference</span>
-          <span className="font-medium text-ink">Your order number (emailed)</span>
-        </div>
+        {[['Account Name', 'BRM Jewellery Ltd'], ['Sort Code', '20-00-00'], ['Account Number', '12345678'], ['Reference', 'Your order number (emailed)']].map(([k, v]) => (
+          <div key={k} className="flex justify-between text-xs">
+            <span className="text-ink-muted">{k}</span>
+            <span className={`font-medium text-ink ${k === 'Sort Code' || k === 'Account Number' ? 'font-mono' : ''}`}>{v}</span>
+          </div>
+        ))}
       </div>
-      <button
-        type="button"
-        onClick={onPay}
-        disabled={paying}
-        className="w-full btn-gold py-3.5 flex items-center justify-center gap-2 text-sm uppercase tracking-widest disabled:opacity-60"
-      >
-        <Lock size={14} />
-        {paying ? 'Processing…' : 'Place Order — Pay by Bank Transfer'}
+      <button type="button" onClick={onPay} disabled={paying}
+        className="w-full btn-gold py-3.5 flex items-center justify-center gap-2 text-sm uppercase tracking-widest disabled:opacity-60">
+        <Lock size={14} />{paying ? 'Processing…' : 'Place Order — Pay by Bank Transfer'}
       </button>
     </div>
   );
@@ -347,10 +449,10 @@ export default function CheckoutPage() {
   const router = useRouter();
   const { user, loading: authLoading } = useAuth();
   const { items, subtotal, count, clearCart } = useCart();
+  const completing = useRef(false);
 
   const [step, setStep] = useState<'address' | 'payment'>('address');
   const [selectedMethod, setSelectedMethod] = useState<PaymentMethod>('visa');
-  const [delivery, setDelivery] = useState('STANDARD');
   const [orderId, setOrderId] = useState('');
   const [creating, setCreating] = useState(false);
   const [paying, setPaying] = useState(false);
@@ -368,13 +470,11 @@ export default function CheckoutPage() {
   }, [user, authLoading, router]);
 
   useEffect(() => {
-    if (!authLoading && count === 0) router.push('/cart');
+    if (!authLoading && count === 0 && !completing.current) router.push('/cart');
   }, [count, authLoading, router]);
 
-  const selectedDelivery = DELIVERY_OPTIONS.find((d) => d.value === delivery)!;
-  const shippingCost = selectedDelivery.price(subtotal);
   const vatAmount = parseFloat((subtotal * VAT_RATE).toFixed(2));
-  const total = parseFloat((subtotal + vatAmount + shippingCost).toFixed(2));
+  const total = parseFloat((subtotal + vatAmount).toFixed(2));
 
   const handleProceedToPayment = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -383,14 +483,11 @@ export default function CheckoutPage() {
       const orderRes = await userOrderApi.create({
         items: items.map((i) => ({ productId: i.productId, quantity: i.quantity })),
         shippingAddress: {
-          line1: address.line1,
-          line2: address.line2 || undefined,
-          city: address.city,
-          county: address.county || undefined,
-          postcode: address.postcode,
-          country: address.country,
+          line1: address.line1, line2: address.line2 || undefined,
+          city: address.city, county: address.county || undefined,
+          postcode: address.postcode, country: address.country,
         },
-        deliveryMethod: delivery,
+        deliveryMethod: 'STANDARD',
       });
       setOrderId(orderRes.data.data.id);
       setStep('payment');
@@ -402,11 +499,13 @@ export default function CheckoutPage() {
   };
 
   const handlePaymentSuccess = useCallback(() => {
+    completing.current = true;
     clearCart();
     router.push(`/checkout/success?orderId=${orderId}`);
   }, [clearCart, router, orderId]);
 
-  const handlePay = useCallback(async () => {
+  // Used only by card / bank_transfer / apple_pay / google_pay
+  const handleSimplePay = useCallback(async () => {
     setPaying(true);
     try {
       await paymentApi.process(orderId, selectedMethod);
@@ -417,22 +516,13 @@ export default function CheckoutPage() {
     }
   }, [orderId, selectedMethod, handlePaymentSuccess]);
 
-  if (authLoading || count === 0) return (
+  if (authLoading || (count === 0 && !completing.current)) return (
     <div className="min-h-screen flex items-center justify-center">
       <div className="w-8 h-8 border-2 border-gold border-t-transparent rounded-full animate-spin" />
     </div>
   );
 
-  const isPending = PENDING_METHODS.includes(selectedMethod);
-
-  const securityNote = (() => {
-    if (CARD_METHODS.includes(selectedMethod)) return 'Card details collected for identity verification — payment via secure terminal';
-    if (selectedMethod === 'apple_pay') return 'Apple Pay — payment collected via our secure in-store terminal';
-    if (selectedMethod === 'klarna') return 'Klarna Pay in 3 — 3 interest-free bank transfer instalments';
-    if (selectedMethod === 'clearpay') return 'Clearpay — 4 interest-free bank transfer payments';
-    if (selectedMethod === 'bank_transfer') return 'Bank transfer — payment instructions sent by email';
-    return '';
-  })();
+  const paypalClientId = process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID || '';
 
   const OrderSummary = () => (
     <div className="space-y-3 text-sm">
@@ -451,7 +541,6 @@ export default function CheckoutPage() {
       <div className="border-t border-gold/10 pt-3 space-y-1.5">
         <div className="flex justify-between text-xs text-ink-muted"><span>Subtotal</span><span>{formatGBP(subtotal)}</span></div>
         <div className="flex justify-between text-xs text-ink-muted"><span>VAT (20%)</span><span>{formatGBP(vatAmount)}</span></div>
-        <div className="flex justify-between text-xs text-ink-muted"><span>Delivery</span><span>{shippingCost === 0 ? 'FREE' : formatGBP(shippingCost)}</span></div>
         <div className="flex justify-between text-sm font-semibold pt-1.5 border-t border-gold/10">
           <span>Total</span><span>{formatGBP(total)}</span>
         </div>
@@ -497,25 +586,6 @@ export default function CheckoutPage() {
                 </div>
               </div>
 
-              <div>
-                <h2 className="text-sm font-semibold uppercase tracking-widest text-ink mb-4">Delivery Method</h2>
-                <div className="space-y-2">
-                  {DELIVERY_OPTIONS.map((opt) => (
-                    <label key={opt.value} className={`flex items-center justify-between p-3 border cursor-pointer transition-colors ${delivery === opt.value ? 'border-gold bg-gold/5' : 'border-gold/10 hover:border-gold/30'}`}>
-                      <div className="flex items-center gap-3">
-                        <input type="radio" name="delivery" value={opt.value} checked={delivery === opt.value} onChange={() => setDelivery(opt.value)} className="text-gold" />
-                        <div>
-                          <p className="text-sm font-medium text-ink">{opt.label}</p>
-                          <p className="text-xs text-ink-muted">{opt.sub}</p>
-                        </div>
-                      </div>
-                      <p className="text-sm font-medium tabular-nums">
-                        {opt.price(subtotal) === 0 ? <span className="text-success">FREE</span> : formatGBP(opt.price(subtotal))}
-                      </p>
-                    </label>
-                  ))}
-                </div>
-              </div>
 
               <button type="submit" disabled={creating}
                 className="w-full btn-gold py-3.5 flex items-center justify-center gap-2 text-sm uppercase tracking-widest disabled:opacity-60">
@@ -529,19 +599,11 @@ export default function CheckoutPage() {
             <div>
               <h2 className="text-sm font-semibold uppercase tracking-widest text-ink mb-5">Payment Method</h2>
 
-              {/* Payment method grid */}
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 mb-6">
+              {/* Payment method tiles */}
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-6">
                 {PAYMENT_METHODS.map((method) => (
-                  <button
-                    key={method.id}
-                    type="button"
-                    onClick={() => setSelectedMethod(method.id)}
-                    className={`flex flex-col items-center gap-2 p-3 border transition-colors text-center ${
-                      selectedMethod === method.id
-                        ? 'border-gold bg-gold/5'
-                        : 'border-gold/10 hover:border-gold/30'
-                    }`}
-                  >
+                  <button key={method.id} type="button" onClick={() => setSelectedMethod(method.id)}
+                    className={`flex flex-col items-center gap-2 p-3 border transition-colors text-center ${selectedMethod === method.id ? 'border-gold bg-gold/5' : 'border-gold/10 hover:border-gold/30'}`}>
                     <div className="h-7 flex items-center justify-center">{method.icon}</div>
                     <span className="text-xs font-semibold text-ink leading-tight">{method.label}</span>
                     <span className="text-[10px] text-ink-muted leading-tight">{method.sub}</span>
@@ -549,42 +611,58 @@ export default function CheckoutPage() {
                 ))}
               </div>
 
-              {/* Security note */}
+              {/* Security badge */}
               <div className="flex items-center gap-1.5 text-xs text-ink-muted mb-5">
                 <Lock size={11} />
-                <span>{securityNote}</span>
+                <span>
+                  {CARD_METHODS.includes(selectedMethod) && 'Card details for identity only — payment collected in store'}
+                  {selectedMethod === 'apple_pay' && 'Apple Pay — Touch ID / Face ID authentication'}
+                  {selectedMethod === 'google_pay' && 'Google Pay — secure payment via your Google account'}
+                  {selectedMethod === 'paypal' && 'PayPal — pay via your PayPal account or saved card'}
+                  {selectedMethod === 'klarna' && 'Klarna — pay in 3 interest-free instalments'}
+                  {selectedMethod === 'clearpay' && 'Clearpay — 4 interest-free payments, redirects to Clearpay'}
+                  {selectedMethod === 'bank_transfer' && 'Bank transfer — payment instructions sent by email'}
+                </span>
               </div>
 
-              {/* Pending order notice */}
-              {isPending && (
-                <div className="bg-amber-50 border border-amber-200 text-amber-800 text-xs px-4 py-3 mb-5 rounded-sm">
-                  Your order will be reserved and a confirmation email sent immediately. Please complete the bank transfer within 3 days to confirm your order.
-                </div>
-              )}
-
-              {/* ── Card forms (Visa / Mastercard) ── */}
+              {/* ── Visa / Mastercard ── */}
               {CARD_METHODS.includes(selectedMethod) && (
-                <CardForm method={selectedMethod} total={total} onPay={handlePay} paying={paying} />
+                <CardForm method={selectedMethod} total={total} onPay={handleSimplePay} paying={paying} />
               )}
 
               {/* ── Apple Pay ── */}
               {selectedMethod === 'apple_pay' && (
-                <ApplePayButton total={total} onPay={handlePay} paying={paying} />
+                <ApplePayForm total={total} onSuccess={handlePaymentSuccess} />
+              )}
+
+              {/* ── Google Pay ── */}
+              {selectedMethod === 'google_pay' && (
+                <GooglePayForm total={total} onSuccess={handlePaymentSuccess} />
+              )}
+
+              {/* ── PayPal ── */}
+              {selectedMethod === 'paypal' && paypalClientId && (
+                <PayPalScriptProvider options={{ clientId: paypalClientId, currency: 'GBP', intent: 'capture', components: 'buttons' }}>
+                  <PayPalForm orderId={orderId} onSuccess={handlePaymentSuccess} />
+                </PayPalScriptProvider>
+              )}
+              {selectedMethod === 'paypal' && !paypalClientId && (
+                <p className="text-sm text-red-600 py-4">PayPal is not configured. Set NEXT_PUBLIC_PAYPAL_CLIENT_ID in your .env.</p>
               )}
 
               {/* ── Klarna ── */}
               {selectedMethod === 'klarna' && (
-                <KlarnaForm total={total} onPay={handlePay} paying={paying} />
+                <KlarnaForm orderId={orderId} onSuccess={handlePaymentSuccess} />
               )}
 
               {/* ── Clearpay ── */}
               {selectedMethod === 'clearpay' && (
-                <ClearpayForm total={total} onPay={handlePay} paying={paying} />
+                <ClearpayForm orderId={orderId} total={total} />
               )}
 
               {/* ── Bank Transfer ── */}
               {selectedMethod === 'bank_transfer' && (
-                <BankTransferForm onPay={handlePay} paying={paying} />
+                <BankTransferForm onPay={handleSimplePay} paying={paying} />
               )}
 
               <button type="button" onClick={() => setStep('address')}
@@ -595,7 +673,7 @@ export default function CheckoutPage() {
           )}
         </div>
 
-        {/* Order Summary — right column */}
+        {/* Order summary */}
         <div className="lg:col-span-2">
           <button onClick={() => setSummaryOpen(!summaryOpen)}
             className="lg:hidden w-full flex items-center justify-between border border-gold/10 p-4 mb-4 text-sm">

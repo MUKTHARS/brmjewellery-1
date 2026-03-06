@@ -33,6 +33,8 @@ export default function Footer() {
               <li><Link href="/bespoke" className="hover:text-gold transition-colors">Bespoke Jewellery</Link></li>
               <li><Link href="/appointments" className="hover:text-gold transition-colors">Book Appointment</Link></li>
               <li><Link href="/account/orders" className="hover:text-gold transition-colors">Track Order</Link></li>
+              <li><Link href="/faq" className="hover:text-gold transition-colors">FAQ</Link></li>
+              <li><Link href="/about" className="hover:text-gold transition-colors">About Us</Link></li>
             </ul>
           </div>
 
@@ -40,9 +42,11 @@ export default function Footer() {
           <div>
             <h4 className="text-xs uppercase tracking-widest text-white/40 mb-4">Contact</h4>
             <ul className="space-y-2 text-xs text-white/50">
-              <li>London, United Kingdom</li>
-              <li>hello@brmjewellery.co.uk</li>
+              <li>Hatton Garden, London EC1N 8HN</li>
+              <li><a href="mailto:hello@brmjewellery.co.uk" className="hover:text-gold transition-colors">hello@brmjewellery.co.uk</a></li>
+              <li><a href="tel:+442071234567" className="hover:text-gold transition-colors">+44 (0)20 7123 4567</a></li>
               <li>Mon–Sat, 10am–6pm GMT</li>
+              <li className="pt-1"><Link href="/contact" className="hover:text-gold transition-colors">Send a message →</Link></li>
             </ul>
           </div>
         </div>

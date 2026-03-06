@@ -206,8 +206,8 @@ export default function ProductDetailPage() {
         )}
         {activeTab === 'delivery' && (
           <div className="space-y-4 text-sm text-ink-muted">
-            <div><p className="font-medium text-ink mb-1">Standard Delivery (3–5 days) — Free on orders over £100</p><p>Tracked and insured with Royal Mail Signed For. £5.99 for orders under £100.</p></div>
-            <div><p className="font-medium text-ink mb-1">Express Delivery (1–2 days) — £9.99</p><p>Next working day on orders placed before 1pm GMT.</p></div>
+            <div><p className="font-medium text-ink mb-1">Standard Delivery (3–5 days) — Free</p><p>Tracked and insured with Royal Mail Signed For. All UK orders delivered free of charge.</p></div>
+            <div><p className="font-medium text-ink mb-1">Express Delivery (1–2 days)</p><p>Next working day on orders placed before 1pm GMT.</p></div>
             <div><p className="font-medium text-ink mb-1">Returns — 30 Days</p><p>Unworn items in original packaging may be returned within 30 days. Bespoke items are non-returnable.</p></div>
           </div>
         )}

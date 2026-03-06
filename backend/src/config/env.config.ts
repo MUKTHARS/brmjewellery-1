@@ -24,6 +24,20 @@ const envSchema = z.object({
   BANK_SORT_CODE: z.string().default('00-00-00'),
   BANK_ACCOUNT_NUMBER: z.string().default('00000000'),
 
+  // PayPal (sandbox credentials from developer.paypal.com)
+  PAYPAL_CLIENT_ID: z.string().optional(),
+  PAYPAL_CLIENT_SECRET: z.string().optional(),
+  PAYPAL_BASE_URL: z.string().default('https://api-m.sandbox.paypal.com'),
+
+  // Klarna (playground credentials from portal.klarna.com)
+  KLARNA_API_KEY: z.string().optional(), // base64-encoded "username:password" from Klarna portal
+  KLARNA_BASE_URL: z.string().default('https://api.playground.klarna.com'),
+
+  // Clearpay / Afterpay (sandbox credentials from portal.afterpay.com)
+  CLEARPAY_MERCHANT_ID: z.string().optional(),
+  CLEARPAY_SECRET_KEY: z.string().optional(),
+  CLEARPAY_BASE_URL: z.string().default('https://global-api-sandbox.afterpay.com'),
+
   SMTP_HOST: z.string().default('smtp.gmail.com'),
   SMTP_PORT: z.string().default('587').transform(Number),
   SMTP_SECURE: z.string().default('false').transform((v) => v === 'true'),

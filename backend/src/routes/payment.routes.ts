@@ -5,8 +5,22 @@ import { requireAdmin } from '../middleware/role.middleware';
 
 const router = Router();
 
-// All payment methods use a single endpoint — method string selects the flow
+// Simple flow: cards / apple_pay / google_pay / bank_transfer
 router.post('/process', authenticate, paymentController.processPayment);
+
+// PayPal
+router.post('/paypal/create-order', authenticate, paymentController.createPayPalOrder);
+router.post('/paypal/capture', authenticate, paymentController.capturePayPalOrder);
+
+// Klarna
+router.post('/klarna/session', authenticate, paymentController.createKlarnaSession);
+router.post('/klarna/authorize', authenticate, paymentController.authorizeKlarna);
+
+// Clearpay / Afterpay
+router.post('/clearpay/checkout', authenticate, paymentController.createClearpayCheckout);
+router.post('/clearpay/confirm', authenticate, paymentController.confirmClearpay);
+
+// Admin
 router.post('/refund', authenticate, requireAdmin, paymentController.refundOrder);
 
 export default router;

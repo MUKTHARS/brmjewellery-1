@@ -6,18 +6,14 @@ import { Minus, Plus, Trash2, ShoppingBag, ArrowRight } from 'lucide-react';
 import { useCart } from '@/contexts/CartContext';
 import { formatGBP } from '@/lib/formatCurrency';
 
-const FREE_SHIPPING_THRESHOLD = 100;
-const SHIPPING_COST = 5.99;
 const VAT_RATE = 0.2;
 
 export default function CartPage() {
   const router = useRouter();
   const { items, count, subtotal, updateQuantity, removeItem } = useCart();
 
-  const shippingCost = subtotal >= FREE_SHIPPING_THRESHOLD ? 0 : SHIPPING_COST;
   const vatAmount = parseFloat((subtotal * VAT_RATE).toFixed(2));
-  const total = parseFloat((subtotal + vatAmount + shippingCost).toFixed(2));
-  const remaining = FREE_SHIPPING_THRESHOLD - subtotal;
+  const total = parseFloat((subtotal + vatAmount).toFixed(2));
 
   if (count === 0) return (
     <div className="max-w-2xl mx-auto px-4 py-24 text-center">
@@ -38,15 +34,6 @@ export default function CartPage() {
         <div className="w-16 h-px bg-gold mt-4" />
       </div>
 
-      {/* Free shipping progress */}
-      {remaining > 0 && (
-        <div className="bg-cream border border-gold/10 px-4 py-3 mb-6 text-xs">
-          <p className="text-ink-muted">Add <span className="text-gold font-medium">{formatGBP(remaining)}</span> more for free standard delivery</p>
-          <div className="mt-2 h-1 bg-gold/10 rounded-full overflow-hidden">
-            <div className="h-full bg-gold transition-all" style={{ width: `${Math.min((subtotal / FREE_SHIPPING_THRESHOLD) * 100, 100)}%` }} />
-          </div>
-        </div>
-      )}
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
         {/* Items */}
@@ -106,12 +93,6 @@ export default function CartPage() {
               <div className="flex justify-between">
                 <span className="text-ink-muted">VAT (20%)</span>
                 <span className="tabular-nums">{formatGBP(vatAmount)}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-ink-muted">Delivery</span>
-                <span className={shippingCost === 0 ? 'text-success font-medium' : 'tabular-nums'}>
-                  {shippingCost === 0 ? 'FREE' : formatGBP(shippingCost)}
-                </span>
               </div>
               <div className="border-t border-gold/10 pt-3 flex justify-between font-semibold">
                 <span>Total</span>

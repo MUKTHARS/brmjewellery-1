@@ -90,7 +90,7 @@ export default async function HomePage() {
             {[
               { icon: Gem, label: 'Hallmarked', sub: 'Assay Office certified' },
               { icon: Shield, label: 'Authentic', sub: 'Ethically sourced metals' },
-              { icon: Truck, label: 'Free Delivery', sub: 'On orders over £100' },
+              { icon: Truck, label: 'Free Delivery', sub: 'On all UK orders' },
               { icon: RotateCcw, label: '30-Day Returns', sub: 'Hassle-free exchanges' },
             ].map(({ icon: Icon, label, sub }) => (
               <div key={label} className="flex flex-col items-center gap-1.5">
@@ -165,6 +165,66 @@ export default async function HomePage() {
           </div>
         </section>
       )}
+
+      {/* Who We Are */}
+      <section className="py-20">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="grid md:grid-cols-2 gap-16 items-center">
+            <div>
+              <p className="text-gold text-xs uppercase tracking-widest mb-3">Our Story</p>
+              <h2 className="font-cormorant text-4xl font-light text-ink mb-6">Who We Are</h2>
+              <div className="space-y-4 text-sm text-ink-muted leading-relaxed">
+                <p>
+                  BRM Jewellery was founded in the heart of Hatton Garden — London's historic jewellery quarter — by master goldsmiths with decades of experience crafting fine jewellery for discerning clients across the United Kingdom.
+                </p>
+                <p>
+                  Every piece we create begins with a conversation. Whether you're choosing from our curated collections or commissioning something entirely bespoke, we take time to understand what you want to express — and then we bring it to life with uncompromising craftsmanship.
+                </p>
+                <p>
+                  We work exclusively with ethically sourced precious metals and certified gemstones. All our pieces are hallmarked by the London Assay Office, guaranteeing their authenticity and quality for generations to come.
+                </p>
+              </div>
+              <div className="mt-8 grid grid-cols-3 gap-6">
+                {[
+                  { value: '20+', label: 'Years of craft' },
+                  { value: '5,000+', label: 'Pieces made' },
+                  { value: '100%', label: 'Hallmarked' },
+                ].map(({ value, label }) => (
+                  <div key={label} className="border-t border-gold/20 pt-4">
+                    <p className="font-cormorant text-3xl font-light text-ink">{value}</p>
+                    <p className="text-xs text-ink-muted uppercase tracking-wider mt-1">{label}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+            <div className="space-y-6">
+              <div className="aspect-[4/3] overflow-hidden bg-cream">
+                <img
+                  src="https://images.unsplash.com/photo-1617038260897-41a1f14a8ca0?w=800&q=80"
+                  alt="BRM Jewellery workshop"
+                  className="w-full h-full object-cover"
+                />
+              </div>
+              <div className="border border-gold/20 p-6 bg-cream">
+                <p className="text-gold text-xs uppercase tracking-widest mb-3">Visit Our Workshop</p>
+                <address className="not-italic text-sm text-ink-muted space-y-1.5">
+                  <p className="text-ink font-medium">BRM Jewellery Ltd</p>
+                  <p>Hatton Garden</p>
+                  <p>London, EC1N 8HN</p>
+                  <p>United Kingdom</p>
+                  <p className="pt-2">
+                    <a href="tel:+442071234567" className="hover:text-gold transition-colors">+44 (0)20 7123 4567</a>
+                  </p>
+                  <p>
+                    <a href="mailto:hello@brmjewellery.co.uk" className="hover:text-gold transition-colors">hello@brmjewellery.co.uk</a>
+                  </p>
+                  <p className="pt-2 text-xs text-ink-muted/70">Mon – Sat: 10:00 – 18:00 · Sun: By appointment</p>
+                </address>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
 
       {/* Bespoke CTA */}
       <section className="bg-ink py-20">
