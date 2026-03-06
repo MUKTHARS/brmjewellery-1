@@ -10,6 +10,7 @@ import { userOrderApi } from '@/api/order.user.api';
 import { paymentApi } from '@/api/payment.api';
 import { paypalApi } from '@/api/paypal.api';
 import { formatGBP } from '@/lib/formatCurrency';
+import { resolveImageUrl } from '@/lib/resolveImageUrl';
 import toast from 'react-hot-toast';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -529,7 +530,7 @@ export default function CheckoutPage() {
       {items.map((item) => (
         <div key={item.productId} className="flex gap-3">
           <div className="w-14 h-14 flex-shrink-0 bg-cream overflow-hidden">
-            {item.imageUrl && <img src={item.imageUrl} alt={item.title} className="w-full h-full object-cover" />}
+            {item.imageUrl && <img src={resolveImageUrl(item.imageUrl)} alt={item.title} className="w-full h-full object-cover" />}
           </div>
           <div className="flex-1 min-w-0">
             <p className="text-xs font-medium text-ink line-clamp-2">{item.title}</p>

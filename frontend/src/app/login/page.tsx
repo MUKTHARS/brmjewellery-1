@@ -16,9 +16,15 @@ export default function LoginPage() {
   const [password, setPassword] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
-  // Already logged in — go to intended page
+  // Already logged in — redirect admins to admin panel, users to intended page
   useEffect(() => {
-    if (!loading && user) router.replace(redirect);
+    if (!loading && user) {
+      if (user.role === 'ADMIN' || user.role === 'SUPERADMIN') {
+        router.replace('/admin');
+      } else {
+        router.replace(redirect);
+      }
+    }
   }, [user, loading, redirect, router]);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -26,7 +32,7 @@ export default function LoginPage() {
     setSubmitting(true);
     try {
       await login(email, password);
-      router.push(redirect);
+      // Redirect is handled by the useEffect above once user state updates
     } catch (err: unknown) {
       const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message || 'Invalid email or password';
       toast.error(msg);

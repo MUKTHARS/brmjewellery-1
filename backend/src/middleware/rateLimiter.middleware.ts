@@ -5,7 +5,18 @@ import { ERROR_MESSAGES } from '../constants/errorMessages.constants';
 
 export const globalRateLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 500,
+  max: 3000, // supports high production traffic
+  standardHeaders: true,
+  legacyHeaders: false,
+  handler: (_req, res) => {
+    sendError(res, ERROR_MESSAGES.TOO_MANY_REQUESTS, HTTP_STATUS.TOO_MANY_REQUESTS);
+  },
+});
+
+// Lenient limiter for high-frequency authenticated endpoints (e.g. /auth/me)
+export const meLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 1000,
   standardHeaders: true,
   legacyHeaders: false,
   handler: (_req, res) => {
@@ -16,7 +27,7 @@ export const globalRateLimiter = rateLimit({
 // Applied to login — stricter to prevent brute force
 export const authRateLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 20,
+  max: 30,
   standardHeaders: true,
   legacyHeaders: false,
   handler: (_req, res) => {

@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import { Toaster } from 'react-hot-toast';
 import { AuthProvider, useAuth } from '@/contexts/AuthContext';
 import Sidebar from '@/components/admin/Sidebar';
@@ -9,12 +9,18 @@ import Sidebar from '@/components/admin/Sidebar';
 function AdminGuard({ children }: { children: React.ReactNode }) {
   const { user, loading, isAdmin } = useAuth();
   const router = useRouter();
+  const pathname = usePathname();
+  const isLoginPage = pathname === '/admin/login';
 
   useEffect(() => {
-    if (!loading && (!user || !isAdmin)) {
+    // Don't redirect when already on the login page — that creates a blank-page loop
+    if (!loading && (!user || !isAdmin) && !isLoginPage) {
       router.replace('/admin/login');
     }
-  }, [user, loading, isAdmin, router]);
+  }, [user, loading, isAdmin, router, isLoginPage]);
+
+  // Login page bypasses the guard entirely — it manages its own auth state
+  if (isLoginPage) return <>{children}</>;
 
   if (loading) {
     return (

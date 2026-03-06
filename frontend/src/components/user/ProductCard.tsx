@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { ShoppingBag } from 'lucide-react';
 import { formatGBP } from '@/lib/formatCurrency';
+import { resolveImageUrl } from '@/lib/resolveImageUrl';
 
 interface ProductCardProps {
   id: string;
@@ -21,7 +22,7 @@ export default function ProductCard({ slug, title, price, imageUrl, metalType, c
         {/* Image */}
         <div className="aspect-square bg-cream overflow-hidden relative mb-3">
           {imageUrl ? (
-            <img src={imageUrl} alt={title}
+            <img src={resolveImageUrl(imageUrl)} alt={title}
               className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
           ) : (
             <div className="w-full h-full flex items-center justify-center">

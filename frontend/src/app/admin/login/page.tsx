@@ -1,16 +1,19 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import toast from 'react-hot-toast';
 
 export default function AdminLoginPage() {
-  const { login, user, loading, isAdmin } = useAuth();
+  const { login, logout, user, loading, isAdmin } = useAuth();
   const router = useRouter();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  // Track whether a login was just attempted so we don't accidentally
+  // clear a regular user's session when they merely visit this URL
+  const loginAttempted = useRef(false);
 
   // Already logged in as admin — go to dashboard
   useEffect(() => {
@@ -20,10 +23,12 @@ export default function AdminLoginPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSubmitting(true);
+    loginAttempted.current = false;
     try {
       await login(email, password);
-      // AuthContext sets user; the useEffect above will redirect if admin
-      // If not admin, show error
+      loginAttempted.current = true;
+      // If admin → the useEffect above redirects to /admin
+      // If not admin → the effect below clears the session and shows error
     } catch (err: unknown) {
       const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message || 'Invalid credentials';
       toast.error(msg);
@@ -32,14 +37,15 @@ export default function AdminLoginPage() {
     }
   };
 
-  // After login, check role
+  // Only reject non-admin AFTER an actual login attempt —
+  // never on page load, which would silently log out a regular user
   useEffect(() => {
-    if (!loading && user && !isAdmin) {
+    if (!loading && user && !isAdmin && loginAttempted.current) {
+      loginAttempted.current = false;
       toast.error('Access denied — admin account required');
-      localStorage.removeItem('accessToken');
-      router.replace('/admin/login');
+      logout('/admin/login');
     }
-  }, [user, loading, isAdmin, router]);
+  }, [user, loading, isAdmin, logout]);
 
   return (
     <div className="min-h-screen bg-cream flex items-center justify-center px-4">

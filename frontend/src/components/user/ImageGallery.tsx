@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { ChevronLeft, ChevronRight, ZoomIn } from 'lucide-react';
+import { resolveImageUrl } from '@/lib/resolveImageUrl';
 
 interface Props { images: { url: string; altText?: string }[] }
 
@@ -22,7 +23,7 @@ export default function ImageGallery({ images }: Props) {
     <div className="space-y-3">
       {/* Main image */}
       <div className="aspect-square bg-cream overflow-hidden relative group">
-        <img src={images[active].url} alt={images[active].altText || 'Product'}
+        <img src={resolveImageUrl(images[active].url)} alt={images[active].altText || 'Product'}
           className="w-full h-full object-cover" />
         <button onClick={() => setLightbox(true)}
           className="absolute top-3 right-3 p-2 bg-white/80 rounded opacity-0 group-hover:opacity-100 transition-opacity">
@@ -46,7 +47,7 @@ export default function ImageGallery({ images }: Props) {
           {images.map((img, i) => (
             <button key={i} onClick={() => setActive(i)}
               className={`w-16 h-16 flex-shrink-0 overflow-hidden border-2 transition-colors ${active === i ? 'border-gold' : 'border-transparent'}`}>
-              <img src={img.url} alt={img.altText || ''} className="w-full h-full object-cover" />
+              <img src={resolveImageUrl(img.url)} alt={img.altText || ''} className="w-full h-full object-cover" />
             </button>
           ))}
         </div>
@@ -65,7 +66,7 @@ export default function ImageGallery({ images }: Props) {
               </button>
             </>
           )}
-          <img src={images[active].url} alt="" className="max-w-3xl max-h-[90vh] object-contain" onClick={(e) => e.stopPropagation()} />
+          <img src={resolveImageUrl(images[active].url)} alt="" className="max-w-3xl max-h-[90vh] object-contain" onClick={(e) => e.stopPropagation()} />
         </div>
       )}
     </div>

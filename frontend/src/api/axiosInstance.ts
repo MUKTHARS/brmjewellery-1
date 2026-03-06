@@ -41,7 +41,8 @@ api.interceptors.response.use(
       } catch {
         if (typeof window !== 'undefined') {
           localStorage.removeItem('accessToken');
-          window.location.href = '/login';
+          const isAdminRoute = window.location.pathname.startsWith('/admin');
+          window.location.href = isAdminRoute ? '/admin/login' : '/login';
         }
       }
     }

@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { Minus, Plus, Trash2, ShoppingBag, ArrowRight } from 'lucide-react';
 import { useCart } from '@/contexts/CartContext';
 import { formatGBP } from '@/lib/formatCurrency';
+import { resolveImageUrl } from '@/lib/resolveImageUrl';
 
 const VAT_RATE = 0.2;
 
@@ -43,7 +44,7 @@ export default function CartPage() {
               {/* Image */}
               <div className="w-24 h-24 flex-shrink-0 bg-cream overflow-hidden">
                 {item.imageUrl ? (
-                  <img src={item.imageUrl} alt={item.title} className="w-full h-full object-cover" />
+                  <img src={resolveImageUrl(item.imageUrl)} alt={item.title} className="w-full h-full object-cover" />
                 ) : (
                   <div className="w-full h-full flex items-center justify-center">
                     <span className="font-cormorant text-xl text-gold/20">BRM</span>
