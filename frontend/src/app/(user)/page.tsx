@@ -6,6 +6,8 @@ import { categoryApi } from '@/api/category.api';
 import { metalPriceApi } from '@/api/metalPrice.api';
 import ProductCard from '@/components/user/ProductCard';
 import { formatGBP } from '@/lib/formatCurrency';
+import ShopByCategory from '@/components/user/ShopByCategory';
+import NewArrivals from '@/components/user/NewArrivals';
 
 async function getData() {
   try {
@@ -87,6 +89,12 @@ export default async function HomePage() {
       </section>
 
       {/* ── SHOP BY CATEGORY ── */}
+      <ShopByCategory />
+
+      {/* ── NEW ARRIVALS ── */}
+      <NewArrivals />
+
+      {/* ── SHOP BY CATEGORY (API-driven, hidden if no data) ── */}
       {categories.length > 0 && (
         <section style={{ backgroundColor: '#0a0a0a', padding: '80px 0' }}>
           <div className="max-w-7xl mx-auto px-6">
