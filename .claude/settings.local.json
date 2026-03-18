@@ -1,7 +1,8 @@
 {
   "permissions": {
     "allow": [
-      "Bash(npm install @paypal/react-paypal-js --legacy-peer-deps)"
+      "Bash(npm install @paypal/react-paypal-js --legacy-peer-deps)",
+      "WebFetch(domain:goldbank.co.uk)"
     ]
   }
 }

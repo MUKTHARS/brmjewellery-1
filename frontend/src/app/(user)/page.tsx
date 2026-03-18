@@ -1,5 +1,6 @@
 import Link from 'next/link';
-import { ArrowRight, Gem, Shield, Truck, RotateCcw } from 'lucide-react';
+import { ArrowRight, Star, ShieldCheck, Award, BadgeCheck } from 'lucide-react';
+import HeroCarousel from '@/components/user/HeroCarousel';
 import { productApi } from '@/api/product.api';
 import { categoryApi } from '@/api/category.api';
 import { metalPriceApi } from '@/api/metalPrice.api';
@@ -22,11 +23,11 @@ async function getData() {
 }
 
 const CATEGORY_IMAGES: Record<string, string> = {
-  rings: 'https://images.unsplash.com/photo-1605100804763-247f67b3557e?w=600&q=80',
-  'chains-necklaces': 'https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?w=600&q=80',
-  bracelets: 'https://images.unsplash.com/photo-1611591437281-460bfbe1220a?w=600&q=80',
-  earrings: 'https://images.unsplash.com/photo-1588444837495-c6cfeb53f32d?w=600&q=80',
-  pendants: 'https://images.unsplash.com/photo-1619119069152-a2b331eb392a?w=600&q=80',
+  rings: 'https://images.unsplash.com/photo-1605100804763-247f67b3557e?w=800&q=80',
+  'chains-necklaces': 'https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?w=800&q=80',
+  bracelets: 'https://images.unsplash.com/photo-1611591437281-460bfbe1220a?w=800&q=80',
+  earrings: 'https://images.unsplash.com/photo-1588444837495-c6cfeb53f32d?w=800&q=80',
+  pendants: 'https://images.unsplash.com/photo-1619119069152-a2b331eb392a?w=800&q=80',
 };
 
 export default async function HomePage() {
@@ -39,115 +40,139 @@ export default async function HomePage() {
   });
 
   return (
-    <div>
-      {/* Metal Price Ticker */}
+    <div style={{ backgroundColor: '#0a0a0a', color: '#fff' }}>
+
+      {/* ── LIVE PRICE TICKER ── */}
       {prices.length > 0 && (
-        <div className="bg-ink text-white/70 text-xs py-2 overflow-hidden">
-          <div className="flex gap-8 px-4 animate-none whitespace-nowrap overflow-x-auto scrollbar-hide">
+        <div style={{ backgroundColor: '#000', borderBottom: '1px solid rgba(201,168,76,0.2)' }}
+          className="text-xs py-2 overflow-hidden">
+          <div className="flex gap-10 px-6 whitespace-nowrap overflow-x-auto">
             {prices.slice(0, 6).map((p: { metal: string; carat?: string; pricePerGramGBP: number }) => (
               <span key={`${p.metal}-${p.carat}`} className="flex-shrink-0">
-                <span className="text-gold font-medium">{p.metal}{p.carat ? ` ${p.carat}` : ''}</span>
-                <span className="ml-2">{formatGBP(p.pricePerGramGBP)}/g</span>
+                <span style={{ color: '#C9A84C' }} className="font-medium uppercase">
+                  {p.metal}{p.carat ? ` ${p.carat}` : ''}
+                </span>
+                <span className="ml-2 text-white/50">{formatGBP(p.pricePerGramGBP)}/g</span>
               </span>
             ))}
-            <span className="flex-shrink-0 text-white/30">Live spot prices · Updated every 6 min</span>
+            <span className="flex-shrink-0 text-white/20">· Live spot prices · Updated every 6 min ·</span>
           </div>
         </div>
       )}
 
-      {/* Hero */}
-      <section className="relative bg-ink min-h-[85vh] flex items-center overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-ink via-ink/95 to-gold/20" />
-        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24">
-          <div className="max-w-xl">
-            <p className="text-gold text-xs uppercase tracking-[0.4em] mb-6">Handcrafted in London</p>
-            <h1 className="font-cormorant text-5xl md:text-7xl font-light text-white leading-tight mb-6">
-              Where Precious<br />Metals Meet<br /><em className="text-gold">Artistry</em>
-            </h1>
-            <p className="text-white/60 text-base leading-relaxed mb-10 max-w-sm">
-              Each piece is crafted to order using ethically sourced gold, silver, and platinum. Hallmarked and certified.
-            </p>
-            <div className="flex flex-wrap gap-4">
-              <Link href="/products" className="btn-gold inline-flex items-center gap-2 px-8 py-3">
-                Explore Collections <ArrowRight size={16} />
-              </Link>
-              <Link href="/bespoke" className="inline-flex items-center gap-2 px-8 py-3 border border-white/30 text-white text-sm uppercase tracking-widest hover:border-gold hover:text-gold transition-colors">
-                Create Bespoke
-              </Link>
-            </div>
-          </div>
-        </div>
-        <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 text-white/20">
-          <div className="w-px h-10 bg-white/20" />
-          <span className="text-[10px] uppercase tracking-widest">Scroll</span>
-        </div>
-      </section>
+      {/* ── HERO CAROUSEL ── */}
+      <HeroCarousel />
 
-      {/* Trust Badges */}
-      <section className="border-y border-gold/10 bg-cream">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-6 text-center">
+      {/* ── STATS BAR ── */}
+      <section style={{ backgroundColor: '#111', borderTop: '1px solid rgba(201,168,76,0.15)', borderBottom: '1px solid rgba(201,168,76,0.15)' }}>
+        <div className="max-w-7xl mx-auto px-6">
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)' }} className="divide-x divide-gold/10">
             {[
-              { icon: Gem, label: 'Hallmarked', sub: 'Assay Office certified' },
-              { icon: Shield, label: 'Authentic', sub: 'Ethically sourced metals' },
-              { icon: Truck, label: 'Free Delivery', sub: 'On all UK orders' },
-              { icon: RotateCcw, label: '30-Day Returns', sub: 'Hassle-free exchanges' },
-            ].map(({ icon: Icon, label, sub }) => (
-              <div key={label} className="flex flex-col items-center gap-1.5">
-                <Icon size={20} className="text-gold" />
-                <p className="text-xs font-medium text-ink uppercase tracking-widest">{label}</p>
-                <p className="text-xs text-ink-muted">{sub}</p>
+              { value: '5,000+', label: 'Pieces Crafted' },
+              { value: '20+', label: 'Years of Craft' },
+              { value: '100%', label: 'Hallmarked' },
+              { value: '5★', label: 'Rated Excellent' },
+            ].map(({ value, label }) => (
+              <div key={label} style={{ padding: '28px 20px', textAlign: 'center' }}>
+                <p style={{
+                  fontFamily: "'Cormorant Garamond', Georgia, serif",
+                  fontSize: '2.2rem', fontWeight: 300, color: '#C9A84C', lineHeight: 1,
+                  marginBottom: '6px',
+                }}>{value}</p>
+                <p style={{ fontSize: '10px', letterSpacing: '0.2em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.4)' }}>{label}</p>
               </div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* Categories */}
+      {/* ── SHOP BY CATEGORY ── */}
       {categories.length > 0 && (
-        <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
-          <div className="text-center mb-10">
-            <p className="text-gold text-xs uppercase tracking-widest mb-2">Shop by Collection</p>
-            <h2 className="font-cormorant text-4xl font-light text-ink">Our Collections</h2>
-          </div>
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
-            {categories.slice(0, 5).map((cat: { id: string; name: string; slug: string }) => (
-              <Link key={cat.id} href={`/products?categoryId=${cat.id}`}
-                className="group block aspect-[3/4] relative overflow-hidden bg-cream">
-                {CATEGORY_IMAGES[cat.slug] ? (
-                  <img src={CATEGORY_IMAGES[cat.slug]} alt={cat.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
-                ) : (
-                  <div className="w-full h-full flex items-center justify-center bg-cream">
-                    <span className="font-cormorant text-4xl text-gold/30">BRM</span>
+        <section style={{ backgroundColor: '#0a0a0a', padding: '80px 0' }}>
+          <div className="max-w-7xl mx-auto px-6">
+            <div style={{ textAlign: 'center', marginBottom: '48px' }}>
+              <p style={{ color: '#C9A84C', fontSize: '10px', letterSpacing: '0.35em', textTransform: 'uppercase', marginBottom: '12px' }}>
+                Browse
+              </p>
+              <h2 style={{
+                fontFamily: "'Cormorant Garamond', Georgia, serif",
+                fontSize: 'clamp(2rem, 4vw, 3rem)', fontWeight: 300, color: '#fff', letterSpacing: '0.04em',
+              }}>
+                Shop By Category
+              </h2>
+            </div>
+
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+              gap: '2px',
+            }}>
+              {categories.slice(0, 5).map((cat: { id: string; name: string; slug: string }) => (
+                <Link key={cat.id} href={`/products?categoryId=${cat.id}`}
+                  style={{ position: 'relative', display: 'block', aspectRatio: '3/4', overflow: 'hidden', textDecoration: 'none' }}
+                  className="group">
+                  {CATEGORY_IMAGES[cat.slug] ? (
+                    <img src={CATEGORY_IMAGES[cat.slug]} alt={cat.name}
+                      style={{ width: '100%', height: '100%', objectFit: 'cover', transition: 'transform 0.6s ease', display: 'block' }}
+                      className="group-hover:scale-110" />
+                  ) : (
+                    <div style={{ width: '100%', height: '100%', background: '#111', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                      <span style={{ fontFamily: "'Cormorant Garamond', Georgia, serif", fontSize: '3rem', color: 'rgba(201,168,76,0.2)' }}>BRM</span>
+                    </div>
+                  )}
+                  {/* dark overlay */}
+                  <div style={{
+                    position: 'absolute', inset: 0,
+                    background: 'linear-gradient(to top, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.3) 50%, rgba(0,0,0,0.1) 100%)',
+                    transition: 'background 0.4s ease',
+                  }} className="group-hover:[background:linear-gradient(to_top,rgba(0,0,0,0.92)_0%,rgba(0,0,0,0.5)_60%,rgba(0,0,0,0.2)_100%)]" />
+                  {/* label */}
+                  <div style={{
+                    position: 'absolute', inset: 0,
+                    display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'flex-end',
+                    padding: '28px 20px', gap: '14px',
+                  }}>
+                    <p style={{
+                      fontFamily: "'Cormorant Garamond', Georgia, serif",
+                      fontSize: '1.4rem', fontWeight: 300, color: '#fff', letterSpacing: '0.05em', textAlign: 'center',
+                    }}>{cat.name}</p>
+                    <span style={{
+                      display: 'inline-block',
+                      border: '1px solid rgba(201,168,76,0.7)', color: '#C9A84C',
+                      padding: '7px 20px', fontSize: '9px', letterSpacing: '0.25em', textTransform: 'uppercase',
+                      transition: 'all 0.3s', backgroundColor: 'transparent',
+                    }} className="group-hover:bg-[#C9A84C] group-hover:text-black group-hover:border-[#C9A84C]">
+                      DISCOVER
+                    </span>
                   </div>
-                )}
-                <div className="absolute inset-0 bg-gradient-to-t from-ink/60 to-transparent" />
-                <div className="absolute bottom-4 left-4 right-4">
-                  <p className="text-white font-cormorant text-xl font-light">{cat.name}</p>
-                  <p className="text-white/60 text-xs mt-0.5 group-hover:text-gold transition-colors flex items-center gap-1">
-                    Shop now <ArrowRight size={10} />
-                  </p>
-                </div>
-              </Link>
-            ))}
+                </Link>
+              ))}
+            </div>
           </div>
         </section>
       )}
 
-      {/* Featured Products */}
+      {/* ── FEATURED PRODUCTS ── */}
       {products.length > 0 && (
-        <section className="bg-cream py-16">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="flex items-end justify-between mb-10">
+        <section style={{ backgroundColor: '#060606', padding: '80px 0', borderTop: '1px solid rgba(201,168,76,0.12)' }}>
+          <div className="max-w-7xl mx-auto px-6">
+            <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', marginBottom: '48px' }}>
               <div>
-                <p className="text-gold text-xs uppercase tracking-widest mb-2">New Arrivals</p>
-                <h2 className="font-cormorant text-4xl font-light text-ink">Featured Pieces</h2>
+                <p style={{ color: '#C9A84C', fontSize: '10px', letterSpacing: '0.35em', textTransform: 'uppercase', marginBottom: '10px' }}>New Arrivals</p>
+                <h2 style={{
+                  fontFamily: "'Cormorant Garamond', Georgia, serif",
+                  fontSize: 'clamp(1.8rem, 3vw, 2.8rem)', fontWeight: 300, color: '#fff', letterSpacing: '0.04em',
+                }}>Featured Pieces</h2>
               </div>
-              <Link href="/products" className="text-sm text-ink-muted hover:text-gold transition-colors flex items-center gap-1">
-                View all <ArrowRight size={14} />
+              <Link href="/products" style={{
+                display: 'inline-flex', alignItems: 'center', gap: '6px',
+                color: '#C9A84C', fontSize: '10px', letterSpacing: '0.2em', textTransform: 'uppercase',
+                textDecoration: 'none', borderBottom: '1px solid rgba(201,168,76,0.4)', paddingBottom: '2px',
+              }}>
+                VIEW ALL <ArrowRight size={12} />
               </Link>
             </div>
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
               {products.map((p: { id: string; slug: string; title: string; baseCost: number; metalType?: string; carat?: string; images?: { url: string }[]; category?: { name: string } }) => (
                 <ProductCard
                   key={p.id}
@@ -166,97 +191,243 @@ export default async function HomePage() {
         </section>
       )}
 
-      {/* Who We Are */}
-      <section className="py-20">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      {/* ── WHY CHOOSE BRM ── */}
+      <section style={{ backgroundColor: '#0d0d0d', padding: '80px 0', borderTop: '1px solid rgba(201,168,76,0.12)' }}>
+        <div className="max-w-7xl mx-auto px-6">
+          <div style={{ textAlign: 'center', marginBottom: '56px' }}>
+            <p style={{ color: '#C9A84C', fontSize: '10px', letterSpacing: '0.35em', textTransform: 'uppercase', marginBottom: '12px' }}>
+              Our Promise
+            </p>
+            <h2 style={{
+              fontFamily: "'Cormorant Garamond', Georgia, serif",
+              fontSize: 'clamp(2rem, 4vw, 3rem)', fontWeight: 300, color: '#fff', letterSpacing: '0.04em',
+            }}>
+              Why Choose BRM Jewellery
+            </h2>
+          </div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1px', backgroundColor: 'rgba(201,168,76,0.1)' }}>
+            {[
+              {
+                icon: BadgeCheck,
+                title: 'Price Guarantee',
+                desc: 'We guarantee the best price for your bespoke commission — transparent, no hidden costs.',
+              },
+              {
+                icon: ShieldCheck,
+                title: 'Hallmarked & Certified',
+                desc: 'Every piece is hallmarked by the London Assay Office. World-class gold standards guaranteed.',
+              },
+              {
+                icon: Award,
+                title: 'Bespoke Service',
+                desc: 'Commission one-of-a-kind jewellery crafted to your exact specifications by master goldsmiths.',
+              },
+              {
+                icon: Star,
+                title: '5 Star Reviews',
+                desc: 'Rated Excellent by our clients. Over 5,000 pieces crafted and trusted across the UK.',
+              },
+            ].map(({ icon: Icon, title, desc }) => (
+              <div key={title} style={{
+                backgroundColor: '#0d0d0d', padding: '48px 36px', textAlign: 'center',
+                display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '16px',
+              }}>
+                <div style={{
+                  width: '56px', height: '56px', border: '1px solid rgba(201,168,76,0.3)',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  marginBottom: '8px',
+                }}>
+                  <Icon size={22} style={{ color: '#C9A84C' }} />
+                </div>
+                <h3 style={{
+                  fontFamily: "'Cormorant Garamond', Georgia, serif",
+                  fontSize: '1.25rem', fontWeight: 400, color: '#fff', letterSpacing: '0.03em',
+                }}>{title}</h3>
+                <p style={{ fontSize: '13px', color: 'rgba(255,255,255,0.45)', lineHeight: 1.8, maxWidth: '220px' }}>{desc}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ── WHO WE ARE / STORY ── */}
+      <section style={{ backgroundColor: '#060606', padding: '80px 0', borderTop: '1px solid rgba(201,168,76,0.12)' }}>
+        <div className="max-w-7xl mx-auto px-6">
           <div className="grid md:grid-cols-2 gap-16 items-center">
-            <div>
-              <p className="text-gold text-xs uppercase tracking-widest mb-3">Our Story</p>
-              <h2 className="font-cormorant text-4xl font-light text-ink mb-6">Who We Are</h2>
-              <div className="space-y-4 text-sm text-ink-muted leading-relaxed">
+            <div style={{ position: 'relative' }}>
+              <div style={{ aspectRatio: '4/3', overflow: 'hidden', position: 'relative' }}>
+                <img
+                  src="https://images.unsplash.com/photo-1617038260897-41a1f14a8ca0?w=900&q=80"
+                  alt="BRM Jewellery workshop"
+                  style={{ width: '100%', height: '100%', objectFit: 'cover', filter: 'brightness(0.75)' }}
+                />
+                <div style={{
+                  position: 'absolute', inset: 0,
+                  background: 'linear-gradient(135deg, rgba(201,168,76,0.05) 0%, transparent 60%)',
+                }} />
+              </div>
+              {/* floating stat card */}
+              <div style={{
+                position: 'absolute', bottom: '-24px', right: '-20px',
+                backgroundColor: '#C9A84C', padding: '24px 28px', minWidth: '160px',
+              }} className="hidden md:block">
+                <p style={{
+                  fontFamily: "'Cormorant Garamond', Georgia, serif",
+                  fontSize: '2.5rem', fontWeight: 300, color: '#000', lineHeight: 1,
+                }}>20+</p>
+                <p style={{ fontSize: '10px', letterSpacing: '0.15em', textTransform: 'uppercase', color: '#000', opacity: 0.7, marginTop: '4px' }}>
+                  Years of craft
+                </p>
+              </div>
+            </div>
+
+            <div style={{ paddingLeft: '0' }} className="md:pl-8">
+              <p style={{ color: '#C9A84C', fontSize: '10px', letterSpacing: '0.35em', textTransform: 'uppercase', marginBottom: '16px' }}>
+                Our Story
+              </p>
+              <h2 style={{
+                fontFamily: "'Cormorant Garamond', Georgia, serif",
+                fontSize: 'clamp(2rem, 3.5vw, 2.8rem)', fontWeight: 300, color: '#fff',
+                letterSpacing: '0.04em', marginBottom: '24px', lineHeight: 1.2,
+              }}>
+                UK's Leading<br />Fine Jewellers
+              </h2>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', fontSize: '14px', color: 'rgba(255,255,255,0.5)', lineHeight: 1.9 }}>
                 <p>
                   BRM Jewellery was founded in the heart of Hatton Garden — London's historic jewellery quarter — by master goldsmiths with decades of experience crafting fine jewellery for discerning clients across the United Kingdom.
-                </p>
-                <p>
-                  Every piece we create begins with a conversation. Whether you're choosing from our curated collections or commissioning something entirely bespoke, we take time to understand what you want to express — and then we bring it to life with uncompromising craftsmanship.
                 </p>
                 <p>
                   We work exclusively with ethically sourced precious metals and certified gemstones. All our pieces are hallmarked by the London Assay Office, guaranteeing their authenticity and quality for generations to come.
                 </p>
               </div>
-              <div className="mt-8 grid grid-cols-3 gap-6">
+
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: '24px', marginTop: '40px' }}>
                 {[
-                  { value: '20+', label: 'Years of craft' },
                   { value: '5,000+', label: 'Pieces made' },
                   { value: '100%', label: 'Hallmarked' },
+                  { value: '20+', label: 'Years of craft' },
                 ].map(({ value, label }) => (
-                  <div key={label} className="border-t border-gold/20 pt-4">
-                    <p className="font-cormorant text-3xl font-light text-ink">{value}</p>
-                    <p className="text-xs text-ink-muted uppercase tracking-wider mt-1">{label}</p>
+                  <div key={label} style={{ borderTop: '1px solid rgba(201,168,76,0.25)', paddingTop: '16px' }}>
+                    <p style={{
+                      fontFamily: "'Cormorant Garamond', Georgia, serif",
+                      fontSize: '2rem', fontWeight: 300, color: '#C9A84C',
+                    }}>{value}</p>
+                    <p style={{ fontSize: '10px', color: 'rgba(255,255,255,0.35)', letterSpacing: '0.15em', textTransform: 'uppercase', marginTop: '4px' }}>{label}</p>
                   </div>
                 ))}
               </div>
-            </div>
-            <div className="space-y-6">
-              <div className="aspect-[4/3] overflow-hidden bg-cream">
-                <img
-                  src="https://images.unsplash.com/photo-1617038260897-41a1f14a8ca0?w=800&q=80"
-                  alt="BRM Jewellery workshop"
-                  className="w-full h-full object-cover"
-                />
-              </div>
-              <div className="border border-gold/20 p-6 bg-cream">
-                <p className="text-gold text-xs uppercase tracking-widest mb-3">Visit Our Workshop</p>
-                <address className="not-italic text-sm text-ink-muted space-y-1.5">
-                  <p className="text-ink font-medium">BRM Jewellery Ltd</p>
-                  <p>Hatton Garden</p>
-                  <p>London, EC1N 8HN</p>
-                  <p>United Kingdom</p>
-                  <p className="pt-2">
-                    <a href="tel:+442071234567" className="hover:text-gold transition-colors">+44 (0)20 7123 4567</a>
-                  </p>
-                  <p>
-                    <a href="mailto:hello@brmjewellery.co.uk" className="hover:text-gold transition-colors">hello@brmjewellery.co.uk</a>
-                  </p>
-                  <p className="pt-2 text-xs text-ink-muted/70">Mon – Sat: 10:00 – 18:00 · Sun: By appointment</p>
-                </address>
+
+              <div style={{ marginTop: '36px' }}>
+                <Link href="/about" style={{
+                  display: 'inline-flex', alignItems: 'center', gap: '8px',
+                  border: '1px solid rgba(201,168,76,0.4)', color: '#C9A84C',
+                  padding: '12px 28px', fontSize: '10px', letterSpacing: '0.2em',
+                  textTransform: 'uppercase', textDecoration: 'none', transition: 'all 0.3s',
+                }}>
+                  LEARN MORE <ArrowRight size={12} />
+                </Link>
               </div>
             </div>
           </div>
         </div>
       </section>
 
-      {/* Bespoke CTA */}
-      <section className="bg-ink py-20">
-        <div className="max-w-2xl mx-auto text-center px-4">
-          <div className="w-16 h-px bg-gold mx-auto mb-8" />
-          <h2 className="font-cormorant text-4xl font-light text-white mb-4">
+      {/* ── BESPOKE FULL-WIDTH BANNER ── */}
+      <section style={{
+        position: 'relative', padding: '100px 24px',
+        background: 'linear-gradient(135deg, #0a0800 0%, #1a1000 50%, #0a0800 100%)',
+        borderTop: '1px solid rgba(201,168,76,0.2)', borderBottom: '1px solid rgba(201,168,76,0.2)',
+        textAlign: 'center', overflow: 'hidden',
+      }}>
+        <div style={{
+          position: 'absolute', inset: 0,
+          backgroundImage: 'radial-gradient(ellipse 60% 60% at 50% 50%, rgba(201,168,76,0.07) 0%, transparent 70%)',
+          pointerEvents: 'none',
+        }} />
+        <div style={{ position: 'relative', zIndex: 1, maxWidth: '600px', margin: '0 auto' }}>
+          <div style={{ width: '40px', height: '1px', backgroundColor: '#C9A84C', margin: '0 auto 24px' }} />
+          <p style={{ color: '#C9A84C', fontSize: '10px', letterSpacing: '0.35em', textTransform: 'uppercase', marginBottom: '16px' }}>
+            Commission
+          </p>
+          <h2 style={{
+            fontFamily: "'Cormorant Garamond', Georgia, serif",
+            fontSize: 'clamp(2.2rem, 5vw, 3.5rem)', fontWeight: 300, color: '#fff',
+            letterSpacing: '0.04em', marginBottom: '20px', lineHeight: 1.2,
+          }}>
             Something Truly Unique
           </h2>
-          <p className="text-white/50 mb-8 leading-relaxed">
-            Commission a one-of-a-kind piece crafted to your exact specifications. Our master goldsmiths bring your vision to life.
+          <p style={{ color: 'rgba(255,255,255,0.45)', fontSize: '14px', lineHeight: 1.9, marginBottom: '36px' }}>
+            Commission a one-of-a-kind piece crafted to your exact specifications.<br />
+            Our master goldsmiths bring your vision to life.
           </p>
-          <Link href="/bespoke" className="btn-gold inline-flex items-center gap-2 px-8 py-3">
-            Start Your Bespoke Journey <ArrowRight size={16} />
+          <Link href="/bespoke" style={{
+            display: 'inline-flex', alignItems: 'center', gap: '10px',
+            backgroundColor: '#C9A84C', color: '#000',
+            padding: '14px 36px', fontSize: '11px',
+            letterSpacing: '0.2em', textTransform: 'uppercase', fontWeight: 600,
+            textDecoration: 'none',
+          }}>
+            START YOUR BESPOKE JOURNEY <ArrowRight size={14} />
           </Link>
         </div>
+        <div style={{ width: '40px', height: '1px', backgroundColor: '#C9A84C', margin: '24px auto 0' }} />
       </section>
 
-      {/* Appointment CTA */}
-      <section className="py-16">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="border border-gold/20 p-10 text-center">
-            <p className="text-gold text-xs uppercase tracking-widest mb-3">Visit Us</p>
-            <h2 className="font-cormorant text-3xl font-light text-ink mb-4">Book a Private Appointment</h2>
-            <p className="text-ink-muted text-sm max-w-md mx-auto mb-6">
-              Experience our collections in person. Our team is here to help you find the perfect piece.
-            </p>
-            <Link href="/appointments" className="btn-outline-gold inline-flex items-center gap-2 px-6 py-2.5 text-sm">
-              Reserve Your Appointment
-            </Link>
+      {/* ── VISIT / APPOINTMENT ── */}
+      <section style={{ backgroundColor: '#0a0a0a', padding: '80px 24px' }}>
+        <div className="max-w-7xl mx-auto">
+          <div style={{
+            border: '1px solid rgba(201,168,76,0.2)',
+            display: 'grid', gridTemplateColumns: '1fr 1fr',
+            overflow: 'hidden',
+          }} className="grid-cols-1 md:grid-cols-2">
+            {/* left */}
+            <div style={{ padding: '56px 48px', borderRight: '1px solid rgba(201,168,76,0.15)' }}>
+              <p style={{ color: '#C9A84C', fontSize: '10px', letterSpacing: '0.35em', textTransform: 'uppercase', marginBottom: '16px' }}>Visit Us</p>
+              <h3 style={{
+                fontFamily: "'Cormorant Garamond', Georgia, serif",
+                fontSize: '2rem', fontWeight: 300, color: '#fff', letterSpacing: '0.04em', marginBottom: '20px',
+              }}>Book a Private Appointment</h3>
+              <p style={{ color: 'rgba(255,255,255,0.45)', fontSize: '13px', lineHeight: 1.9, marginBottom: '32px' }}>
+                Experience our collections in person. Our expert team is here to help you find the perfect piece or guide your bespoke commission.
+              </p>
+              <Link href="/appointments" style={{
+                display: 'inline-flex', alignItems: 'center', gap: '8px',
+                border: '1px solid #C9A84C', color: '#C9A84C',
+                padding: '12px 28px', fontSize: '10px', letterSpacing: '0.2em',
+                textTransform: 'uppercase', textDecoration: 'none',
+              }}>
+                RESERVE YOUR APPOINTMENT <ArrowRight size={12} />
+              </Link>
+            </div>
+            {/* right */}
+            <div style={{ padding: '56px 48px', backgroundColor: '#080808' }}>
+              <p style={{ color: '#C9A84C', fontSize: '10px', letterSpacing: '0.35em', textTransform: 'uppercase', marginBottom: '20px' }}>Our Workshop</p>
+              <address style={{ fontStyle: 'normal', fontSize: '14px', color: 'rgba(255,255,255,0.5)', lineHeight: 2 }}>
+                <p style={{ color: '#fff', fontWeight: 500, marginBottom: '8px' }}>BRM Jewellery Ltd</p>
+                <p>Hatton Garden</p>
+                <p>London, EC1N 8HN</p>
+                <p>United Kingdom</p>
+                <p style={{ marginTop: '16px' }}>
+                  <a href="tel:+442071234567" className="text-white/50 no-underline hover:text-[#C9A84C] transition-colors">
+                    +44 (0)20 7123 4567
+                  </a>
+                </p>
+                <p>
+                  <a href="mailto:hello@brmjewellery.co.uk" className="text-white/50 no-underline hover:text-[#C9A84C] transition-colors">
+                    hello@brmjewellery.co.uk
+                  </a>
+                </p>
+                <p style={{ marginTop: '16px', fontSize: '11px', color: 'rgba(255,255,255,0.3)' }}>
+                  Mon – Sat: 10:00 – 18:00 · Sun: By appointment
+                </p>
+              </address>
+            </div>
           </div>
         </div>
       </section>
+
     </div>
   );
 }
