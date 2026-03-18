@@ -1,7 +1,6 @@
 import { env } from './config/env.config';
 import app from './app';
 import { connectDatabase, disconnectDatabase } from './config/db.config';
-import { connectRedis, redis } from './config/redis.config';
 import { verifyMailConnection } from './config/nodemailer.config';
 import { fetchAndCacheMetalPrices } from './services/metalPrice.service';
 import { startMetalPriceSyncJob } from './jobs/metalPriceSync.job';
@@ -14,7 +13,6 @@ import { logger } from './utils/logger.utils';
 const start = async (): Promise<void> => {
   try {
     await connectDatabase();
-    await connectRedis();
     await verifyMailConnection();
 
     // Warm up metal prices on startup
@@ -36,7 +34,6 @@ const start = async (): Promise<void> => {
       logger.info(`\n${signal} received — shutting down gracefully`);
       server.close(async () => {
         await disconnectDatabase();
-        await redis.quit();
         logger.info('✅ Server shut down');
         process.exit(0);
       });

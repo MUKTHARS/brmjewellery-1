@@ -1,10 +1,7 @@
 import axios from 'axios';
 import { prisma } from '../config/db.config';
-import { redis, TTL } from '../config/redis.config';
 import { METALS_API_CONFIG, TROY_OZ_TO_GRAMS, PURITY_MULTIPLIERS } from '../config/metalPrice.config';
 import { logger } from '../utils/logger.utils';
-
-const REDIS_KEY = 'metal_prices';
 
 export const fetchAndCacheMetalPrices = async (): Promise<void> => {
   try {
@@ -53,10 +50,7 @@ export const fetchAndCacheMetalPrices = async (): Promise<void> => {
       });
     }
 
-    // Cache in Redis
-    const payload = { rows, fetchedAt: new Date().toISOString() };
-    await redis.setex(REDIS_KEY, TTL.METAL_PRICES, JSON.stringify(payload));
-    logger.info('Metal prices updated and cached');
+    logger.info('Metal prices updated and saved to DB');
   } catch (error) {
     logger.error(`Failed to fetch metal prices: ${(error as Error).message}`);
   }
@@ -72,18 +66,16 @@ const storeMockPrices = async (): Promise<void> => {
     { metal: 'SILVER', carat: '925', pricePerGramGBP: 0.74 },
     { metal: 'PLATINUM', carat: '950', pricePerGramGBP: 28.5 },
   ];
-  const payload = { rows: mockRows, fetchedAt: new Date().toISOString() };
-  await redis.setex(REDIS_KEY, TTL.METAL_PRICES, JSON.stringify(payload));
+  for (const row of mockRows) {
+    await prisma.metalPriceCache.upsert({
+      where: { metal_carat: { metal: row.metal, carat: row.carat } },
+      create: { metal: row.metal, carat: row.carat, pricePerGramGBP: row.pricePerGramGBP, fetchedAt: new Date() },
+      update: { pricePerGramGBP: row.pricePerGramGBP, fetchedAt: new Date() },
+    });
+  }
 };
 
 export const getMetalPrices = async () => {
-  try {
-    const cached = await redis.get(REDIS_KEY);
-    if (cached) return JSON.parse(cached);
-  } catch {
-    // Redis miss — fall through to DB
-  }
-
   const rows = await prisma.metalPriceCache.findMany({ orderBy: [{ metal: 'asc' }, { carat: 'asc' }] });
   return { rows, fetchedAt: rows[0]?.fetchedAt ?? new Date() };
 };

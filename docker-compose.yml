@@ -25,26 +25,6 @@ services:
       retries: 5
 
   # ─────────────────────────────────────────────
-  # Redis
-  # ─────────────────────────────────────────────
-  redis:
-    image: redis:7-alpine
-    container_name: brm_redis
-    restart: unless-stopped
-    command: redis-server --requirepass ${REDIS_PASSWORD:-brm_redis_secret} --maxmemory 256mb --maxmemory-policy allkeys-lru
-    volumes:
-      - redis_data:/data
-    ports:
-      - '6379:6379'
-    networks:
-      - brm_network
-    healthcheck:
-      test: ['CMD', 'redis-cli', '-a', '${REDIS_PASSWORD:-brm_redis_secret}', 'ping']
-      interval: 10s
-      timeout: 5s
-      retries: 5
-
-  # ─────────────────────────────────────────────
   # Backend API
   # ─────────────────────────────────────────────
   backend:
@@ -56,14 +36,11 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
-      redis:
-        condition: service_healthy
     environment:
       NODE_ENV: production
       PORT: 4000
       API_VERSION: v1
       DATABASE_URL: postgresql://${POSTGRES_USER:-brm_user}:${POSTGRES_PASSWORD:-brm_secret}@postgres:5432/${POSTGRES_DB:-brm_jewellery}
-      REDIS_URL: redis://:${REDIS_PASSWORD:-brm_redis_secret}@redis:6379
       JWT_ACCESS_SECRET: ${JWT_ACCESS_SECRET}
       JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET}
       JWT_ACCESS_EXPIRES_IN: 15m
@@ -142,8 +119,6 @@ services:
 
 volumes:
   postgres_data:
-    driver: local
-  redis_data:
     driver: local
   uploads_data:
     driver: local
