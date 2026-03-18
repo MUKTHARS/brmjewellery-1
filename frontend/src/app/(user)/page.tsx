@@ -1,45 +1,22 @@
 import Link from 'next/link';
 import { ArrowRight, Star, ShieldCheck, Award, BadgeCheck } from 'lucide-react';
 import HeroCarousel from '@/components/user/HeroCarousel';
-import { productApi } from '@/api/product.api';
-import { categoryApi } from '@/api/category.api';
 import { metalPriceApi } from '@/api/metalPrice.api';
-import ProductCard from '@/components/user/ProductCard';
 import { formatGBP } from '@/lib/formatCurrency';
 import ShopByCategory from '@/components/user/ShopByCategory';
 import NewArrivals from '@/components/user/NewArrivals';
 
 async function getData() {
   try {
-    const [productsRes, categoriesRes, pricesRes] = await Promise.allSettled([
-      productApi.getAll({ limit: 8, isActive: 'true' }),
-      categoryApi.getAll({ isActive: true }),
-      metalPriceApi.getAll(),
-    ]);
-    return {
-      products: productsRes.status === 'fulfilled' ? (productsRes.value.data.data ?? []) : [],
-      categories: categoriesRes.status === 'fulfilled' ? (categoriesRes.value.data.data ?? []) : [],
-      prices: pricesRes.status === 'fulfilled' ? (pricesRes.value.data.data ?? []) : [],
-    };
-  } catch { return { products: [], categories: [], prices: [] }; }
+    const pricesRes = await metalPriceApi.getCurrent();
+    const raw = pricesRes.data;
+    const prices = Array.isArray(raw.data) ? raw.data : Array.isArray(raw) ? raw : [];
+    return { prices };
+  } catch { return { prices: [] }; }
 }
 
-const CATEGORY_IMAGES: Record<string, string> = {
-  rings: 'https://images.unsplash.com/photo-1605100804763-247f67b3557e?w=800&q=80',
-  'chains-necklaces': 'https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?w=800&q=80',
-  bracelets: 'https://images.unsplash.com/photo-1611591437281-460bfbe1220a?w=800&q=80',
-  earrings: 'https://images.unsplash.com/photo-1588444837495-c6cfeb53f32d?w=800&q=80',
-  pendants: 'https://images.unsplash.com/photo-1619119069152-a2b331eb392a?w=800&q=80',
-};
-
 export default async function HomePage() {
-  const { products, categories, prices } = await getData();
-
-  const priceMap: Record<string, number> = {};
-  prices.forEach((p: { metal: string; carat?: string; pricePerGramGBP: number }) => {
-    const key = p.carat ? `${p.metal}-${p.carat}` : p.metal;
-    priceMap[key] = p.pricePerGramGBP;
-  });
+  const { prices } = await getData();
 
   return (
     <div style={{ backgroundColor: '#0a0a0a', color: '#fff' }}>
@@ -94,110 +71,6 @@ export default async function HomePage() {
       {/* ── NEW ARRIVALS ── */}
       <NewArrivals />
 
-      {/* ── SHOP BY CATEGORY (API-driven, hidden if no data) ── */}
-      {categories.length > 0 && (
-        <section style={{ backgroundColor: '#0a0a0a', padding: '80px 0' }}>
-          <div className="max-w-7xl mx-auto px-6">
-            <div style={{ textAlign: 'center', marginBottom: '48px' }}>
-              <p style={{ color: '#C9A84C', fontSize: '10px', letterSpacing: '0.35em', textTransform: 'uppercase', marginBottom: '12px' }}>
-                Browse
-              </p>
-              <h2 style={{
-                fontFamily: "'Cormorant Garamond', Georgia, serif",
-                fontSize: 'clamp(2rem, 4vw, 3rem)', fontWeight: 300, color: '#fff', letterSpacing: '0.04em',
-              }}>
-                Shop By Category
-              </h2>
-            </div>
-
-            <div style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-              gap: '2px',
-            }}>
-              {categories.slice(0, 5).map((cat: { id: string; name: string; slug: string }) => (
-                <Link key={cat.id} href={`/products?categoryId=${cat.id}`}
-                  style={{ position: 'relative', display: 'block', aspectRatio: '3/4', overflow: 'hidden', textDecoration: 'none' }}
-                  className="group">
-                  {CATEGORY_IMAGES[cat.slug] ? (
-                    <img src={CATEGORY_IMAGES[cat.slug]} alt={cat.name}
-                      style={{ width: '100%', height: '100%', objectFit: 'cover', transition: 'transform 0.6s ease', display: 'block' }}
-                      className="group-hover:scale-110" />
-                  ) : (
-                    <div style={{ width: '100%', height: '100%', background: '#111', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                      <span style={{ fontFamily: "'Cormorant Garamond', Georgia, serif", fontSize: '3rem', color: 'rgba(201,168,76,0.2)' }}>BRM</span>
-                    </div>
-                  )}
-                  {/* dark overlay */}
-                  <div style={{
-                    position: 'absolute', inset: 0,
-                    background: 'linear-gradient(to top, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.3) 50%, rgba(0,0,0,0.1) 100%)',
-                    transition: 'background 0.4s ease',
-                  }} className="group-hover:[background:linear-gradient(to_top,rgba(0,0,0,0.92)_0%,rgba(0,0,0,0.5)_60%,rgba(0,0,0,0.2)_100%)]" />
-                  {/* label */}
-                  <div style={{
-                    position: 'absolute', inset: 0,
-                    display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'flex-end',
-                    padding: '28px 20px', gap: '14px',
-                  }}>
-                    <p style={{
-                      fontFamily: "'Cormorant Garamond', Georgia, serif",
-                      fontSize: '1.4rem', fontWeight: 300, color: '#fff', letterSpacing: '0.05em', textAlign: 'center',
-                    }}>{cat.name}</p>
-                    <span style={{
-                      display: 'inline-block',
-                      border: '1px solid rgba(201,168,76,0.7)', color: '#C9A84C',
-                      padding: '7px 20px', fontSize: '9px', letterSpacing: '0.25em', textTransform: 'uppercase',
-                      transition: 'all 0.3s', backgroundColor: 'transparent',
-                    }} className="group-hover:bg-[#C9A84C] group-hover:text-black group-hover:border-[#C9A84C]">
-                      DISCOVER
-                    </span>
-                  </div>
-                </Link>
-              ))}
-            </div>
-          </div>
-        </section>
-      )}
-
-      {/* ── FEATURED PRODUCTS ── */}
-      {products.length > 0 && (
-        <section style={{ backgroundColor: '#060606', padding: '80px 0', borderTop: '1px solid rgba(201,168,76,0.12)' }}>
-          <div className="max-w-7xl mx-auto px-6">
-            <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', marginBottom: '48px' }}>
-              <div>
-                <p style={{ color: '#C9A84C', fontSize: '10px', letterSpacing: '0.35em', textTransform: 'uppercase', marginBottom: '10px' }}>New Arrivals</p>
-                <h2 style={{
-                  fontFamily: "'Cormorant Garamond', Georgia, serif",
-                  fontSize: 'clamp(1.8rem, 3vw, 2.8rem)', fontWeight: 300, color: '#fff', letterSpacing: '0.04em',
-                }}>Featured Pieces</h2>
-              </div>
-              <Link href="/products" style={{
-                display: 'inline-flex', alignItems: 'center', gap: '6px',
-                color: '#C9A84C', fontSize: '10px', letterSpacing: '0.2em', textTransform: 'uppercase',
-                textDecoration: 'none', borderBottom: '1px solid rgba(201,168,76,0.4)', paddingBottom: '2px',
-              }}>
-                VIEW ALL <ArrowRight size={12} />
-              </Link>
-            </div>
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-              {products.map((p: { id: string; slug: string; title: string; baseCost: number; metalType?: string; carat?: string; images?: { url: string }[]; category?: { name: string } }) => (
-                <ProductCard
-                  key={p.id}
-                  id={p.id}
-                  slug={p.slug}
-                  title={p.title}
-                  price={Number(p.baseCost)}
-                  imageUrl={p.images?.[0]?.url}
-                  metalType={p.metalType ?? undefined}
-                  carat={p.carat ?? undefined}
-                  category={p.category?.name}
-                />
-              ))}
-            </div>
-          </div>
-        </section>
-      )}
 
       {/* ── WHY CHOOSE BRM ── */}
       <section style={{ backgroundColor: '#0d0d0d', padding: '80px 0', borderTop: '1px solid rgba(201,168,76,0.12)' }}>
