@@ -133,15 +133,17 @@ function ProductCardLuxury({ product: p, onAddToCart }: { product: Product; onAd
       {/* Image */}
       <div style={{ position: 'relative', aspectRatio: '3/4', overflow: 'hidden', backgroundColor: '#f5f5f2', marginBottom: '14px' }}>
         {imageUrl ? (
-          <img
-            src={imageUrl}
-            alt={p.title}
-            style={{
-              width: '100%', height: '100%', objectFit: 'cover', display: 'block',
-              transition: 'transform 0.6s ease',
-              transform: hovered ? 'scale(1.06)' : 'scale(1)',
-            }}
-          />
+          <Link href={`/products/${p.slug}`} style={{ display: 'block', width: '100%', height: '100%' }}>
+            <img
+              src={imageUrl}
+              alt={p.title}
+              style={{
+                width: '100%', height: '100%', objectFit: 'cover', display: 'block',
+                transition: 'transform 0.6s ease',
+                transform: hovered ? 'scale(1.06)' : 'scale(1)',
+              }}
+            />
+          </Link>
         ) : (
           <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             <span style={{ fontFamily: "'Cormorant Garamond', Georgia, serif", fontSize: '2rem', fontWeight: 300, color: 'rgba(201,168,76,0.25)' }}>BRM</span>
