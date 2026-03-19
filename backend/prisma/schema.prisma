@@ -191,6 +191,7 @@ model Product {
   slug        String             @unique
   description String?
   story       String?
+  brand       String?
   categoryId  String
   category    Category           @relation(fields: [categoryId], references: [id])
   images      ProductImage[]

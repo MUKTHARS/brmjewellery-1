@@ -11,6 +11,7 @@ export const createProductSchema = z.object({
   slug: z.string().optional(),
   description: z.string().optional(),
   story: z.string().optional(),
+  brand: z.string().optional(),
   categoryId: z.string().min(1, 'Category is required'),
   metalType: z.enum(['GOLD', 'SILVER', 'PLATINUM']).optional(),
   carat: z.string().optional(),
@@ -31,6 +32,9 @@ export const productQuerySchema = z.object({
   search: z.string().optional(),
   isActive: z.string().optional(),
   metalType: z.string().optional(),
+  brand: z.string().optional(),
+  minWeight: z.string().optional(),
+  maxWeight: z.string().optional(),
   sortBy: z.enum(['createdAt', 'title', 'baseCost']).optional(),
   order: z.enum(['asc', 'desc']).optional(),
 });

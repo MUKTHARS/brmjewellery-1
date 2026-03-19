@@ -36,7 +36,7 @@ export default function ProductFormPage() {
   const [newFiles, setNewFiles] = useState<File[]>([]);
 
   const [form, setForm] = useState({
-    title: '', slug: '', sku: '', description: '', story: '',
+    title: '', slug: '', sku: '', description: '', story: '', brand: '',
     categoryId: '', metalType: '', carat: '', weightGrams: '',
     baseCost: '', stockQty: '0', isActive: true,
   });
@@ -54,7 +54,7 @@ export default function ProductFormPage() {
       const p = data.data;
       setForm({
         title: p.title, slug: p.slug, sku: p.sku,
-        description: p.description || '', story: p.story || '',
+        description: p.description || '', story: p.story || '', brand: p.brand || '',
         categoryId: p.categoryId, metalType: p.metalType || '',
         carat: p.carat || '', weightGrams: p.weightGrams ? String(p.weightGrams) : '',
         baseCost: String(p.baseCost), stockQty: String(p.stockQty),
@@ -178,6 +178,10 @@ export default function ProductFormPage() {
               <div className="col-span-2">
                 <label className="label-base">Description</label>
                 <textarea rows={4} className="input-base resize-none" value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} placeholder="Product description…" />
+              </div>
+              <div>
+                <label className="label-base">Brand / Maker</label>
+                <input className="input-base" value={form.brand} onChange={(e) => setForm({ ...form, brand: e.target.value })} placeholder="e.g. BRM Jewellery, Cartier…" />
               </div>
               <div className="col-span-2">
                 <label className="label-base">Brand Story</label>

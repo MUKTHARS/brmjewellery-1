@@ -13,7 +13,7 @@ import { formatUKDate } from '@/lib/formatDate';
 import toast from 'react-hot-toast';
 
 interface Product {
-  id: string; title: string; slug: string; description?: string; story?: string;
+  id: string; title: string; slug: string; description?: string; story?: string; brand?: string;
   baseCost: number; metalType?: string; carat?: string; weightGrams?: number; sku: string;
   stockQty: number; isActive: boolean;
   images: { id: string; url: string; altText?: string; isPrimary: boolean }[];
@@ -42,7 +42,7 @@ export default function ProductDetailPage() {
       try {
         const [pRes, rRes] = await Promise.allSettled([
           productApi.getBySlug(slug),
-          reviewApi.getAll({ productSlug: slug, isVisible: true, limit: 10 }),
+          reviewApi.getAll({ productSlug: slug, isVisible: 'true', limit: 10 }),
         ]);
         if (pRes.status === 'fulfilled') setProduct(pRes.value.data.data);
         if (rRes.status === 'fulfilled') setReviews(rRes.value.data.data ?? []);
@@ -112,8 +112,14 @@ export default function ProductDetailPage() {
             <span className="text-xs text-ink-muted">incl. VAT</span>
           </div>
 
-          {(product.metalType || product.carat || product.weightGrams) && (
-            <div className="flex gap-4 text-xs text-ink-muted">
+          {(product.brand || product.metalType || product.carat || product.weightGrams) && (
+            <div className="flex flex-wrap gap-4 text-xs text-ink-muted">
+              {product.brand && (
+                <span className="flex items-center gap-1">
+                  <span className="uppercase tracking-widest text-[10px] text-ink-muted/60">Brand</span>
+                  <span className="text-ink font-medium">{product.brand}</span>
+                </span>
+              )}
               {product.metalType && <span className="uppercase">{product.metalType}</span>}
               {product.carat && <span>{product.carat}</span>}
               {product.weightGrams && <span>{Number(product.weightGrams).toFixed(2)}g</span>}
@@ -187,18 +193,40 @@ export default function ProductDetailPage() {
         {activeTab === 'details' && (
           <div className="space-y-3 text-sm text-ink-muted leading-relaxed">
             {product.description && <p>{product.description}</p>}
-            {product.attributes.length > 0 && (
-              <table className="w-full mt-4">
-                <tbody>
-                  {product.attributes.map((a) => (
-                    <tr key={a.id} className="border-b border-gold/5">
-                      <td className="py-2 pr-8 text-xs uppercase tracking-widest text-ink-muted w-40">{a.fieldLabel}</td>
-                      <td className="py-2 text-ink text-sm">{a.value}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            )}
+            <table className="w-full mt-4">
+              <tbody>
+                {product.brand && (
+                  <tr className="border-b border-gold/5">
+                    <td className="py-2 pr-8 text-xs uppercase tracking-widest text-ink-muted w-40">Brand</td>
+                    <td className="py-2 text-ink text-sm">{product.brand}</td>
+                  </tr>
+                )}
+                {product.metalType && (
+                  <tr className="border-b border-gold/5">
+                    <td className="py-2 pr-8 text-xs uppercase tracking-widest text-ink-muted w-40">Metal</td>
+                    <td className="py-2 text-ink text-sm">{product.metalType}</td>
+                  </tr>
+                )}
+                {product.carat && (
+                  <tr className="border-b border-gold/5">
+                    <td className="py-2 pr-8 text-xs uppercase tracking-widest text-ink-muted w-40">Carat</td>
+                    <td className="py-2 text-ink text-sm">{product.carat}</td>
+                  </tr>
+                )}
+                {product.weightGrams && (
+                  <tr className="border-b border-gold/5">
+                    <td className="py-2 pr-8 text-xs uppercase tracking-widest text-ink-muted w-40">Weight</td>
+                    <td className="py-2 text-ink text-sm">{Number(product.weightGrams).toFixed(3)}g</td>
+                  </tr>
+                )}
+                {product.attributes.map((a) => (
+                  <tr key={a.id} className="border-b border-gold/5">
+                    <td className="py-2 pr-8 text-xs uppercase tracking-widest text-ink-muted w-40">{a.fieldLabel}</td>
+                    <td className="py-2 text-ink text-sm">{a.value}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         )}
         {activeTab === 'story' && (

@@ -4,7 +4,8 @@
       "Bash(npm install @paypal/react-paypal-js --legacy-peer-deps)",
       "WebFetch(domain:goldbank.co.uk)",
       "Bash(find /c/saple.ai/brmjnew -type f \\\\\\(-name *.js -o -name *.ts -o -name *.jsx -o -name *.tsx \\\\\\) ! -path */node_modules/* ! -path */.next/* ! -path */dist/*)",
-      "Bash(find /c/saple.ai/brmjnew/frontend -type f \\\\\\(-name *.ts -o -name *.tsx -o -name *.js -o -name *.jsx \\\\\\) ! -path */node_modules/* ! -path */.next/* ! -path */dist/*)"
+      "Bash(find /c/saple.ai/brmjnew/frontend -type f \\\\\\(-name *.ts -o -name *.tsx -o -name *.js -o -name *.jsx \\\\\\) ! -path */node_modules/* ! -path */.next/* ! -path */dist/*)",
+      "Bash(npx prisma:*)"
     ]
   }
 }

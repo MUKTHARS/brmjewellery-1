@@ -21,6 +21,7 @@ export const createProduct = async (data: CreateProductInput, imageUrls: string[
       slug,
       description: data.description,
       story: data.story,
+      brand: data.brand,
       categoryId: data.categoryId,
       metalType: data.metalType as any,
       carat: data.carat,
@@ -57,6 +58,9 @@ export const getProducts = async (
     search?: string;
     isActive?: string;
     metalType?: string;
+    brand?: string;
+    minWeight?: string;
+    maxWeight?: string;
     sortBy?: string;
     order?: string;
   }
@@ -65,11 +69,19 @@ export const getProducts = async (
 
   if (filters.categoryId) where.categoryId = filters.categoryId;
   if (filters.metalType) where.metalType = filters.metalType;
+  if (filters.brand) where.brand = { contains: filters.brand, mode: 'insensitive' };
   if (filters.isActive !== undefined) where.isActive = filters.isActive === 'true';
+  if (filters.minWeight || filters.maxWeight) {
+    where.weightGrams = {
+      ...(filters.minWeight ? { gte: parseFloat(filters.minWeight) } : {}),
+      ...(filters.maxWeight ? { lte: parseFloat(filters.maxWeight) } : {}),
+    };
+  }
   if (filters.search) {
     where.OR = [
       { title: { contains: filters.search, mode: 'insensitive' } },
       { sku: { contains: filters.search, mode: 'insensitive' } },
+      { brand: { contains: filters.search, mode: 'insensitive' } },
     ];
   }
 
@@ -153,6 +165,7 @@ export const updateProduct = async (id: string, data: UpdateProductInput, newIma
         ...(data.slug && { slug: data.slug }),
         ...(data.description !== undefined && { description: data.description }),
         ...(data.story !== undefined && { story: data.story }),
+        ...(data.brand !== undefined && { brand: data.brand }),
         ...(data.categoryId && { categoryId: data.categoryId }),
         ...(data.metalType && { metalType: data.metalType as any }),
         ...(data.carat !== undefined && { carat: data.carat }),
