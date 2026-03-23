@@ -266,7 +266,17 @@ export default function ProductsPage() {
         minWeight: wr ? String(wr.min) : undefined,
         maxWeight: wr && wr.max !== Infinity ? String(wr.max) : undefined,
       });
-      setProducts(data.data ?? []);
+      const list: Product[] = data.data ?? [];
+      const withImages = await Promise.all(
+        list.map(async (p) => {
+          if (p.images && p.images.length > 0) return p;
+          try {
+            const detail = await productApi.getBySlug(p.slug);
+            return detail.data.data ?? p;
+          } catch { return p; }
+        })
+      );
+      setProducts(withImages);
       setTotal(data.meta?.total ?? 0);
       setTotalPages(data.meta?.totalPages ?? 1);
     } finally {

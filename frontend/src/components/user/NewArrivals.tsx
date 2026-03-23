@@ -2,9 +2,9 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { ArrowRight } from 'lucide-react';
-import { productApi } from '@/api/product.api';
-import ProductCard from '@/components/user/ProductCard';
+import { ArrowRight, ShoppingBag } from 'lucide-react';
+import { formatGBP } from '@/lib/formatCurrency';
+import { resolveImageUrl } from '@/lib/resolveImageUrl';
 
 type Product = {
   id: string;
@@ -21,10 +21,21 @@ export default function NewArrivals() {
   const [products, setProducts] = useState<Product[]>([]);
 
   useEffect(() => {
-    productApi.getAll({ limit: 4 })
-      .then((res) => {
-        const data: Product[] = res.data.data ?? res.data ?? [];
-        setProducts(data.slice(0, 4));
+    const base = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:5000';
+    fetch(`${base}/api/v1/products?limit=4`, { credentials: 'include' })
+      .then((r) => r.json())
+      .then(async (json) => {
+        const list: Product[] = json.data ?? json ?? [];
+        const slugs = list.slice(0, 4).map((p) => p.slug);
+        const details = await Promise.all(
+          slugs.map((slug) =>
+            fetch(`${base}/api/v1/products/slug/${slug}`, { credentials: 'include' })
+              .then((r) => r.json())
+              .then((j) => j.data as Product)
+              .catch(() => null)
+          )
+        );
+        setProducts(details.filter(Boolean) as Product[]);
       })
       .catch(() => {});
   }, []);
@@ -93,22 +104,110 @@ export default function NewArrivals() {
           </Link>
         </div>
 
-        {/* Product Grid */}
+        {/* Dark Product Grid */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
           {products.map((p) => {
             const primaryImage = p.images?.find((img) => img.isPrimary) ?? p.images?.[0];
+            const imageUrl = resolveImageUrl(primaryImage?.url);
+            const meta = [p.metalType, p.carat].filter(Boolean).join(' · ');
             return (
-              <ProductCard
-                key={p.id}
-                id={p.id}
-                slug={p.slug}
-                title={p.title}
-                price={Number(p.baseCost)}
-                imageUrl={primaryImage?.url}
-                metalType={p.metalType ?? undefined}
-                carat={p.carat ?? undefined}
-                category={p.category?.name}
-              />
+              <div key={p.id} className="group" style={{ cursor: 'pointer' }}>
+                {/* Image */}
+                <Link href={`/products/${p.slug}`} style={{ display: 'block', textDecoration: 'none' }}>
+                  <div
+                    style={{
+                      aspectRatio: '1 / 1',
+                      backgroundColor: '#111',
+                      overflow: 'hidden',
+                      position: 'relative',
+                      marginBottom: '14px',
+                      border: '1px solid rgba(201,168,76,0.08)',
+                    }}
+                  >
+                    {imageUrl ? (
+                      <img
+                        src={imageUrl}
+                        alt={p.title}
+                        style={{ width: '100%', height: '100%', objectFit: 'contain', transition: 'transform 0.5s ease', padding: '12px' }}
+                        className="group-hover:scale-105"
+                      />
+                    ) : (
+                      <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        <span style={{ fontFamily: "'Cormorant Garamond', Georgia, serif", fontSize: '2.5rem', color: 'rgba(201,168,76,0.15)' }}>BRM</span>
+                      </div>
+                    )}
+                    {/* Quick add overlay */}
+                    <div
+                      className="translate-y-full group-hover:translate-y-0 transition-transform duration-300"
+                      style={{
+                        position: 'absolute',
+                        bottom: 0,
+                        left: 0,
+                        right: 0,
+                      }}
+                    >
+                      <button
+                        onClick={(e) => e.preventDefault()}
+                        style={{
+                          width: '100%',
+                          backgroundColor: '#C9A84C',
+                          color: '#000',
+                          fontSize: '10px',
+                          letterSpacing: '0.2em',
+                          textTransform: 'uppercase',
+                          padding: '12px',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          gap: '6px',
+                          border: 'none',
+                          cursor: 'pointer',
+                          fontWeight: 600,
+                        }}
+                      >
+                        <ShoppingBag size={12} /> Add to Bag
+                      </button>
+                    </div>
+                  </div>
+                </Link>
+
+                {/* Info */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                  {p.category?.name && (
+                    <p style={{ fontSize: '10px', letterSpacing: '0.25em', textTransform: 'uppercase', color: '#C9A84C', margin: 0 }}>
+                      {p.category.name}
+                    </p>
+                  )}
+                  <Link href={`/products/${p.slug}`} style={{ textDecoration: 'none' }}>
+                    <h3
+                      style={{
+                        fontFamily: "'Cormorant Garamond', Georgia, serif",
+                        fontSize: '1rem',
+                        fontWeight: 400,
+                        color: '#fff',
+                        margin: 0,
+                        lineHeight: 1.3,
+                        display: '-webkit-box',
+                        WebkitLineClamp: 2,
+                        WebkitBoxOrient: 'vertical',
+                        overflow: 'hidden',
+                        transition: 'color 0.2s',
+                      }}
+                      className="group-hover:text-[#C9A84C]"
+                    >
+                      {p.title}
+                    </h3>
+                  </Link>
+                  {meta && (
+                    <p style={{ fontSize: '11px', color: 'rgba(255,255,255,0.35)', margin: 0, letterSpacing: '0.05em' }}>
+                      {meta}
+                    </p>
+                  )}
+                  <p style={{ fontSize: '13px', fontWeight: 600, color: '#C9A84C', margin: 0, letterSpacing: '0.03em' }}>
+                    {formatGBP(Number(p.baseCost))}
+                  </p>
+                </div>
+              </div>
             );
           })}
         </div>
