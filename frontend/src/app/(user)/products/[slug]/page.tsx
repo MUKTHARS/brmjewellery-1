@@ -7,6 +7,7 @@ import { productApi } from '@/api/product.api';
 import { reviewApi } from '@/api/review.api';
 import ImageGallery from '@/components/user/ImageGallery';
 import StarRating from '@/components/user/StarRating';
+import ProductCard from '@/components/user/ProductCard';
 import { useCart } from '@/contexts/CartContext';
 import { formatGBP } from '@/lib/formatCurrency';
 import { formatUKDate } from '@/lib/formatDate';
@@ -32,6 +33,7 @@ export default function ProductDetailPage() {
 
   const [product, setProduct] = useState<Product | null>(null);
   const [reviews, setReviews] = useState<Review[]>([]);
+  const [relatedProducts, setRelatedProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [qty, setQty] = useState(1);
   const [added, setAdded] = useState(false);
@@ -44,7 +46,15 @@ export default function ProductDetailPage() {
           productApi.getBySlug(slug),
           reviewApi.getAll({ productSlug: slug, isVisible: 'true', limit: 10 }),
         ]);
-        if (pRes.status === 'fulfilled') setProduct(pRes.value.data.data);
+        if (pRes.status === 'fulfilled') {
+          const p = pRes.value.data.data;
+          setProduct(p);
+          const params: Record<string, string | number> = { limit: 8, isActive: 'true' };
+          if (p?.category?.id) params.categoryId = p.category.id;
+          const relRes = await productApi.getAll(params);
+          const all: Product[] = relRes.data.data ?? relRes.data ?? [];
+          setRelatedProducts(all.filter((r: Product) => r.slug !== slug).slice(0, 4));
+        }
         if (rRes.status === 'fulfilled') setReviews(rRes.value.data.data ?? []);
       } finally { setLoading(false); }
     };
@@ -268,6 +278,32 @@ export default function ProductDetailPage() {
                 {r.body && <p className="text-sm text-ink-muted leading-relaxed">{r.body}</p>}
               </div>
             ))}
+          </div>
+        </div>
+      )}
+
+      {/* Related Products */}
+      {relatedProducts.length > 0 && (
+        <div className="mt-16 pt-12 border-t border-gold/10">
+          <h2 className="font-cormorant text-2xl font-light text-ink mb-8">You May Also Like</h2>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+            {relatedProducts.map((p) => {
+              const primaryImage = p.images.find((img) => img.isPrimary) ?? p.images[0];
+              return (
+                <ProductCard
+                  key={p.id}
+                  id={p.id}
+                  slug={p.slug}
+                  title={p.title}
+                  price={Number(p.baseCost)}
+                  imageUrl={primaryImage?.url}
+                  metalType={p.metalType}
+                  carat={p.carat ?? undefined}
+                  category={p.category?.name}
+                  onAddToCart={() => addItem({ productId: p.id, title: p.title, price: Number(p.baseCost), imageUrl: primaryImage?.url, sku: p.sku, metalType: p.metalType, carat: p.carat ?? undefined, quantity: 1 })}
+                />
+              );
+            })}
           </div>
         </div>
       )}

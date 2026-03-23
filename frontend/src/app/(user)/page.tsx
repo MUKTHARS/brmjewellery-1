@@ -68,9 +68,6 @@ export default async function HomePage() {
       {/* ── SHOP BY CATEGORY ── */}
       <ShopByCategory />
 
-      {/* ── NEW ARRIVALS ── */}
-      <NewArrivals />
-
 
       {/* ── WHY CHOOSE BRM ── */}
       <section style={{ backgroundColor: '#0d0d0d', padding: '80px 0', borderTop: '1px solid rgba(201,168,76,0.12)' }}>
@@ -254,6 +251,9 @@ export default async function HomePage() {
         </div>
         <div style={{ width: '40px', height: '1px', backgroundColor: '#C9A84C', margin: '24px auto 0' }} />
       </section>
+
+      {/* ── NEW ARRIVALS ── */}
+      <NewArrivals />
 
       {/* ── VISIT / APPOINTMENT ── */}
       <section style={{ backgroundColor: '#0a0a0a', padding: '80px 24px' }}>

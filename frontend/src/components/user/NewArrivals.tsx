@@ -1,3 +1,6 @@
+'use client';
+
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { ArrowRight } from 'lucide-react';
 import { productApi } from '@/api/product.api';
@@ -10,21 +13,21 @@ type Product = {
   baseCost: number;
   metalType?: string;
   carat?: string;
-  images?: { url: string }[];
+  images?: { url: string; isPrimary?: boolean }[];
   category?: { name: string };
 };
 
-async function getNewArrivals(): Promise<Product[]> {
-  try {
-    const res = await productApi.getAll({ limit: 4, isActive: 'true' });
-    return res.data.data ?? [];
-  } catch {
-    return [];
-  }
-}
+export default function NewArrivals() {
+  const [products, setProducts] = useState<Product[]>([]);
 
-export default async function NewArrivals() {
-  const products = await getNewArrivals();
+  useEffect(() => {
+    productApi.getAll({ limit: 4 })
+      .then((res) => {
+        const data: Product[] = res.data.data ?? res.data ?? [];
+        setProducts(data.slice(0, 4));
+      })
+      .catch(() => {});
+  }, []);
 
   if (products.length === 0) return null;
 
@@ -92,19 +95,22 @@ export default async function NewArrivals() {
 
         {/* Product Grid */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-          {products.map((p) => (
-            <ProductCard
-              key={p.id}
-              id={p.id}
-              slug={p.slug}
-              title={p.title}
-              price={Number(p.baseCost)}
-              imageUrl={p.images?.[0]?.url}
-              metalType={p.metalType ?? undefined}
-              carat={p.carat ?? undefined}
-              category={p.category?.name}
-            />
-          ))}
+          {products.map((p) => {
+            const primaryImage = p.images?.find((img) => img.isPrimary) ?? p.images?.[0];
+            return (
+              <ProductCard
+                key={p.id}
+                id={p.id}
+                slug={p.slug}
+                title={p.title}
+                price={Number(p.baseCost)}
+                imageUrl={primaryImage?.url}
+                metalType={p.metalType ?? undefined}
+                carat={p.carat ?? undefined}
+                category={p.category?.name}
+              />
+            );
+          })}
         </div>
       </div>
     </section>
