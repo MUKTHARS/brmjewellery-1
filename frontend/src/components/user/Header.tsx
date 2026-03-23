@@ -258,14 +258,6 @@ export default function Header() {
                             {item.label}
                           </Link>
                         ))}
-                        {(user.role === 'ADMIN' || user.role === 'SUPERADMIN') && (
-                          <Link href="/admin" onClick={() => setAccountOpen(false)}
-                            style={{ display: 'block', padding: '10px 14px', fontSize: '9px', letterSpacing: '0.15em', textTransform: 'uppercase', color: '#C9A84C', textDecoration: 'none', borderBottom: '1px solid rgba(201,168,76,0.07)', transition: 'background 0.2s' }}
-                            onMouseEnter={e => (e.currentTarget as HTMLAnchorElement).style.backgroundColor = 'rgba(201,168,76,0.05)'}
-                            onMouseLeave={e => (e.currentTarget as HTMLAnchorElement).style.backgroundColor = 'transparent'}>
-                            Admin Panel
-                          </Link>
-                        )}
                         <button onClick={() => { setAccountOpen(false); logout(); }}
                           style={{ display: 'block', width: '100%', textAlign: 'left', padding: '10px 14px', background: 'none', border: 'none', cursor: 'pointer', fontSize: '9px', letterSpacing: '0.15em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.3)', transition: 'color 0.2s' }}
                           onMouseEnter={e => (e.currentTarget.style.color = '#fff')}
@@ -285,8 +277,8 @@ export default function Header() {
               </div>
             </div>
 
-            {/* ── ALWAYS VISIBLE: single Cart + mobile hamburger ── */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginLeft: 'auto' }} className="md:ml-4">
+            {/* ── ALWAYS VISIBLE: single Cart + mobile-only hamburger ── */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginLeft: 'auto' }}>
               <Link href="/cart" style={{ position: 'relative', display: 'flex', flexShrink: 0 }}>
                 <ShoppingBag size={18} style={{ color: 'rgba(255,255,255,0.7)', transition: 'color 0.2s' }}
                   onMouseEnter={e => (e.currentTarget as SVGElement).style.color = '#C9A84C'}
