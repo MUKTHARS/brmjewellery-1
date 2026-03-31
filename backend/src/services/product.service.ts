@@ -24,7 +24,10 @@ export const createProduct = async (data: CreateProductInput, imageUrls: string[
       brand: data.brand,
       categoryId: data.categoryId,
       metalType: data.metalType as any,
+      metalColor: data.metalColor,
       carat: data.carat,
+      gemstone: data.gemstone,
+      diamondShape: data.diamondShape,
       weightGrams: data.weightGrams,
       baseCost: data.baseCost,
       sku: data.sku,
@@ -58,9 +61,15 @@ export const getProducts = async (
     search?: string;
     isActive?: string;
     metalType?: string;
+    metalColor?: string;
+    carat?: string;
     brand?: string;
+    gemstone?: string;
+    diamondShape?: string;
     minWeight?: string;
     maxWeight?: string;
+    minPrice?: string;
+    maxPrice?: string;
     sortBy?: string;
     order?: string;
   }
@@ -68,20 +77,50 @@ export const getProducts = async (
   const where: Record<string, unknown> = {};
 
   if (filters.categoryId) where.categoryId = filters.categoryId;
-  if (filters.metalType) where.metalType = filters.metalType;
-  if (filters.brand) where.brand = { contains: filters.brand, mode: 'insensitive' };
   if (filters.isActive !== undefined) where.isActive = filters.isActive === 'true';
+  if (filters.brand) where.brand = { contains: filters.brand, mode: 'insensitive' };
+  if (filters.carat) where.carat = { contains: filters.carat, mode: 'insensitive' };
+
+  // Metal type: map colour variants to base enum
+  if (filters.metalType) {
+    const metalMap: Record<string, string> = {
+      'Yellow Gold': 'GOLD',
+      'White Gold':  'GOLD',
+      'Rose Gold':   'GOLD',
+      'Silver':      'SILVER',
+      'Platinum':    'PLATINUM',
+    };
+    const mapped = metalMap[filters.metalType] ?? filters.metalType.toUpperCase();
+    where.metalType = mapped;
+    // When a colour variant is selected, also filter by metalColor
+    if (['Yellow Gold', 'White Gold', 'Rose Gold'].includes(filters.metalType)) {
+      where.metalColor = { contains: filters.metalType, mode: 'insensitive' };
+    }
+  }
+
+  if (filters.gemstone)     where.gemstone     = { contains: filters.gemstone,     mode: 'insensitive' };
+  if (filters.diamondShape) where.diamondShape = { contains: filters.diamondShape, mode: 'insensitive' };
+
   if (filters.minWeight || filters.maxWeight) {
     where.weightGrams = {
       ...(filters.minWeight ? { gte: parseFloat(filters.minWeight) } : {}),
       ...(filters.maxWeight ? { lte: parseFloat(filters.maxWeight) } : {}),
     };
   }
+
+  if (filters.minPrice || filters.maxPrice) {
+    where.baseCost = {
+      ...(filters.minPrice ? { gte: parseFloat(filters.minPrice) } : {}),
+      ...(filters.maxPrice ? { lte: parseFloat(filters.maxPrice) } : {}),
+    };
+  }
+
   if (filters.search) {
     where.OR = [
-      { title: { contains: filters.search, mode: 'insensitive' } },
-      { sku: { contains: filters.search, mode: 'insensitive' } },
-      { brand: { contains: filters.search, mode: 'insensitive' } },
+      { title:    { contains: filters.search, mode: 'insensitive' } },
+      { sku:      { contains: filters.search, mode: 'insensitive' } },
+      { brand:    { contains: filters.search, mode: 'insensitive' } },
+      { gemstone: { contains: filters.search, mode: 'insensitive' } },
     ];
   }
 
@@ -168,7 +207,10 @@ export const updateProduct = async (id: string, data: UpdateProductInput, newIma
         ...(data.brand !== undefined && { brand: data.brand }),
         ...(data.categoryId && { categoryId: data.categoryId }),
         ...(data.metalType && { metalType: data.metalType as any }),
+        ...(data.metalColor !== undefined && { metalColor: data.metalColor }),
         ...(data.carat !== undefined && { carat: data.carat }),
+        ...(data.gemstone !== undefined && { gemstone: data.gemstone }),
+        ...(data.diamondShape !== undefined && { diamondShape: data.diamondShape }),
         ...(data.weightGrams !== undefined && { weightGrams: data.weightGrams }),
         ...(data.baseCost !== undefined && { baseCost: data.baseCost }),
         ...(data.sku && { sku: data.sku }),

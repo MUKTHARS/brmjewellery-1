@@ -186,28 +186,31 @@ model AttributeField {
 // ─────────────────────────────────────────────
 
 model Product {
-  id          String             @id @default(cuid())
-  title       String
-  slug        String             @unique
-  description String?
-  story       String?
-  brand       String?
-  categoryId  String
-  category    Category           @relation(fields: [categoryId], references: [id])
-  images      ProductImage[]
-  attributes  ProductAttribute[]
-  metalType   MetalType?
-  carat       String?
-  weightGrams Decimal?           @db.Decimal(10, 3)
-  baseCost    Decimal            @db.Decimal(10, 2)
-  sku         String             @unique
-  isActive    Boolean            @default(true)
-  stockQty    Int                @default(0)
-  orderItems  OrderItem[]
-  cartItems   CartItem[]
-  reviews     Review[]
-  createdAt   DateTime           @default(now())
-  updatedAt   DateTime           @updatedAt
+  id           String             @id @default(cuid())
+  title        String
+  slug         String             @unique
+  description  String?
+  story        String?
+  brand        String?
+  categoryId   String
+  category     Category           @relation(fields: [categoryId], references: [id])
+  images       ProductImage[]
+  attributes   ProductAttribute[]
+  metalType    MetalType?
+  metalColor   String?
+  carat        String?
+  gemstone     String?
+  diamondShape String?
+  weightGrams  Decimal?           @db.Decimal(10, 3)
+  baseCost     Decimal            @db.Decimal(10, 2)
+  sku          String             @unique
+  isActive     Boolean            @default(true)
+  stockQty     Int                @default(0)
+  orderItems   OrderItem[]
+  cartItems    CartItem[]
+  reviews      Review[]
+  createdAt    DateTime           @default(now())
+  updatedAt    DateTime           @updatedAt
 
   @@map("products")
 }

@@ -2,12 +2,24 @@
 
 import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { ShoppingBag, Menu, X, User, ChevronDown } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useCart } from '@/contexts/CartContext';
 import { metalPriceApi } from '@/api/metalPrice.api';
 import { formatGBP } from '@/lib/formatCurrency';
+
+const FILTER_GEMSTONES = ['Diamond', 'Ruby', 'Sapphire', 'Emerald', 'Pearl', 'Amethyst', 'Aquamarine', 'Opal', 'Garnet', 'Topaz'];
+const FILTER_DIAMOND_SHAPES = ['Round', 'Princess', 'Oval', 'Marquise', 'Pear', 'Cushion', 'Emerald Cut', 'Radiant', 'Asscher', 'Heart'];
+const FILTER_METALS = ['Yellow Gold', 'White Gold', 'Rose Gold', 'Silver', 'Platinum'];
+
+const METAL_SWATCHES: Record<string, string> = {
+  'Yellow Gold': '#C9A84C',
+  'White Gold':  '#E8E8E8',
+  'Rose Gold':   '#E8B4A0',
+  'Silver':      '#C0C0C0',
+  'Platinum':    '#8E9093',
+};
 
 const NAV_LINKS = [
   { href: '/products', label: 'Collections', hasDropdown: true },
@@ -23,7 +35,9 @@ type MetalPrice = { metal: string; carat?: string; pricePerGramGBP: number };
 type Category   = { id: string; name: string; slug: string };
 
 export default function Header() {
-  const pathname = usePathname();
+  const pathname    = usePathname();
+  const router      = useRouter();
+  const searchParams = useSearchParams();
   const { user, logout } = useAuth();
   const { count } = useCart();
 
@@ -32,9 +46,39 @@ export default function Header() {
   const [collectionsOpen, setCollectionsOpen] = useState(false);
   const [prices,          setPrices]          = useState<MetalPrice[]>([]);
   const [categories,      setCategories]      = useState<Category[]>([]);
+  const [activeFilterPanel, setActiveFilterPanel] = useState<string | null>(null);
 
   const accountRef     = useRef<HTMLDivElement>(null);
   const collectionsRef = useRef<HTMLDivElement>(null);
+  const filterBarRef   = useRef<HTMLDivElement>(null);
+
+  const isProductsPage = pathname === '/products' || pathname.startsWith('/products');
+
+  // Read active filter values from URL
+  const activeGemstone    = searchParams.get('gemstone') ?? '';
+  const activeDiamondShape = searchParams.get('diamondShape') ?? '';
+  const activeMetalType   = searchParams.get('metalType') ?? '';
+
+  const hasAdvancedFilters = !!(activeGemstone || activeDiamondShape || activeMetalType);
+
+  function applyFilter(key: string, value: string) {
+    const params = new URLSearchParams(searchParams.toString());
+    if (params.get(key) === value) {
+      params.delete(key);
+    } else {
+      params.set(key, value);
+    }
+    router.push(`/products?${params.toString()}`);
+    setActiveFilterPanel(null);
+  }
+
+  function clearAdvancedFilters() {
+    const params = new URLSearchParams(searchParams.toString());
+    params.delete('gemstone');
+    params.delete('diamondShape');
+    params.delete('metalType');
+    router.push(`/products?${params.toString()}`);
+  }
 
   // Fetch live metal prices
   useEffect(() => {
@@ -61,6 +105,17 @@ export default function Header() {
     const handler = (e: MouseEvent) => {
       if (accountRef.current && !accountRef.current.contains(e.target as Node)) {
         setAccountOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, []);
+
+  // Close filter panel on outside click
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (filterBarRef.current && !filterBarRef.current.contains(e.target as Node)) {
+        setActiveFilterPanel(null);
       }
     };
     document.addEventListener('mousedown', handler);
@@ -299,6 +354,237 @@ export default function Header() {
           </div>
         </div>
       </div>
+
+      {/* ── ADVANCED FILTER BAR (products page only) ── */}
+      {isProductsPage && (
+        <div
+          ref={filterBarRef}
+          style={{
+            backgroundColor: '#111',
+            borderBottom: '1px solid rgba(201,168,76,0.12)',
+            position: 'relative',
+            zIndex: 40,
+          }}
+        >
+          <div style={{ maxWidth: '1280px', margin: '0 auto', padding: '0 24px', display: 'flex', alignItems: 'center', gap: '0' }}>
+
+            {/* Label */}
+            <span className="hidden md:inline-block" style={{ fontSize: '7px', letterSpacing: '0.3em', textTransform: 'uppercase', color: 'rgba(201,168,76,0.4)', paddingRight: '20px', borderRight: '1px solid rgba(201,168,76,0.1)', marginRight: '4px', whiteSpace: 'nowrap' }}>
+              Filter by
+            </span>
+
+            {/* ── GEMSTONES ── */}
+            <div style={{ position: 'relative' }}>
+              <button
+                onClick={() => setActiveFilterPanel(activeFilterPanel === 'gemstone' ? null : 'gemstone')}
+                style={{
+                  display: 'flex', alignItems: 'center', gap: '5px',
+                  padding: '12px 18px',
+                  background: 'none', border: 'none', cursor: 'pointer',
+                  fontSize: '9px', letterSpacing: '0.2em', textTransform: 'uppercase',
+                  color: activeGemstone || activeFilterPanel === 'gemstone' ? '#C9A84C' : 'rgba(255,255,255,0.45)',
+                  borderBottom: activeGemstone ? '2px solid #C9A84C' : '2px solid transparent',
+                  transition: 'color 0.2s',
+                }}
+                onMouseEnter={e => { if (!activeGemstone) (e.currentTarget as HTMLButtonElement).style.color = '#fff'; }}
+                onMouseLeave={e => { if (!activeGemstone) (e.currentTarget as HTMLButtonElement).style.color = activeFilterPanel === 'gemstone' ? '#C9A84C' : 'rgba(255,255,255,0.45)'; }}
+              >
+                {activeGemstone || 'Gemstones'}
+                <ChevronDown size={9} style={{ transition: 'transform 0.2s', transform: activeFilterPanel === 'gemstone' ? 'rotate(180deg)' : 'none' }} />
+              </button>
+
+              {activeFilterPanel === 'gemstone' && (
+                <div style={{
+                  position: 'absolute', top: '100%', left: 0,
+                  backgroundColor: '#111', border: '1px solid rgba(201,168,76,0.18)',
+                  boxShadow: '0 16px 40px rgba(0,0,0,0.85)',
+                  minWidth: '200px', zIndex: 60, padding: '8px 0',
+                }}>
+                  <div style={{ padding: '8px 16px 6px', borderBottom: '1px solid rgba(201,168,76,0.08)' }}>
+                    <span style={{ fontSize: '7px', letterSpacing: '0.3em', textTransform: 'uppercase', color: 'rgba(201,168,76,0.45)' }}>Select Gemstone</span>
+                  </div>
+                  {FILTER_GEMSTONES.map(g => (
+                    <button
+                      key={g}
+                      onClick={() => applyFilter('gemstone', g)}
+                      style={{
+                        display: 'flex', alignItems: 'center', gap: '10px',
+                        width: '100%', padding: '9px 16px',
+                        background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left',
+                        fontSize: '10px', letterSpacing: '0.12em', textTransform: 'uppercase',
+                        color: activeGemstone === g ? '#C9A84C' : 'rgba(255,255,255,0.55)',
+                        backgroundColor: activeGemstone === g ? 'rgba(201,168,76,0.06)' : 'transparent',
+                        transition: 'color 0.15s, background 0.15s',
+                      }}
+                      onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.color = '#C9A84C'; (e.currentTarget as HTMLButtonElement).style.backgroundColor = 'rgba(201,168,76,0.05)'; }}
+                      onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.color = activeGemstone === g ? '#C9A84C' : 'rgba(255,255,255,0.55)'; (e.currentTarget as HTMLButtonElement).style.backgroundColor = activeGemstone === g ? 'rgba(201,168,76,0.06)' : 'transparent'; }}
+                    >
+                      <span style={{
+                        width: '12px', height: '12px', flexShrink: 0,
+                        border: `1px solid ${activeGemstone === g ? '#C9A84C' : 'rgba(255,255,255,0.2)'}`,
+                        backgroundColor: activeGemstone === g ? '#C9A84C' : 'transparent',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      }}>
+                        {activeGemstone === g && <span style={{ width: '5px', height: '5px', backgroundColor: '#fff' }} />}
+                      </span>
+                      {g}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <div style={{ width: '1px', height: '20px', backgroundColor: 'rgba(201,168,76,0.1)' }} />
+
+            {/* ── DIAMOND SHAPE ── */}
+            <div style={{ position: 'relative' }}>
+              <button
+                onClick={() => setActiveFilterPanel(activeFilterPanel === 'diamondShape' ? null : 'diamondShape')}
+                style={{
+                  display: 'flex', alignItems: 'center', gap: '5px',
+                  padding: '12px 18px',
+                  background: 'none', border: 'none', cursor: 'pointer',
+                  fontSize: '9px', letterSpacing: '0.2em', textTransform: 'uppercase',
+                  color: activeDiamondShape || activeFilterPanel === 'diamondShape' ? '#C9A84C' : 'rgba(255,255,255,0.45)',
+                  borderBottom: activeDiamondShape ? '2px solid #C9A84C' : '2px solid transparent',
+                  transition: 'color 0.2s',
+                }}
+                onMouseEnter={e => { if (!activeDiamondShape) (e.currentTarget as HTMLButtonElement).style.color = '#fff'; }}
+                onMouseLeave={e => { if (!activeDiamondShape) (e.currentTarget as HTMLButtonElement).style.color = activeFilterPanel === 'diamondShape' ? '#C9A84C' : 'rgba(255,255,255,0.45)'; }}
+              >
+                {activeDiamondShape || 'Diamond Shape'}
+                <ChevronDown size={9} style={{ transition: 'transform 0.2s', transform: activeFilterPanel === 'diamondShape' ? 'rotate(180deg)' : 'none' }} />
+              </button>
+
+              {activeFilterPanel === 'diamondShape' && (
+                <div style={{
+                  position: 'absolute', top: '100%', left: 0,
+                  backgroundColor: '#111', border: '1px solid rgba(201,168,76,0.18)',
+                  boxShadow: '0 16px 40px rgba(0,0,0,0.85)',
+                  minWidth: '200px', zIndex: 60, padding: '8px 0',
+                }}>
+                  <div style={{ padding: '8px 16px 6px', borderBottom: '1px solid rgba(201,168,76,0.08)' }}>
+                    <span style={{ fontSize: '7px', letterSpacing: '0.3em', textTransform: 'uppercase', color: 'rgba(201,168,76,0.45)' }}>Select Shape</span>
+                  </div>
+                  {FILTER_DIAMOND_SHAPES.map(s => (
+                    <button
+                      key={s}
+                      onClick={() => applyFilter('diamondShape', s)}
+                      style={{
+                        display: 'flex', alignItems: 'center', gap: '10px',
+                        width: '100%', padding: '9px 16px',
+                        background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left',
+                        fontSize: '10px', letterSpacing: '0.12em', textTransform: 'uppercase',
+                        color: activeDiamondShape === s ? '#C9A84C' : 'rgba(255,255,255,0.55)',
+                        backgroundColor: activeDiamondShape === s ? 'rgba(201,168,76,0.06)' : 'transparent',
+                        transition: 'color 0.15s, background 0.15s',
+                      }}
+                      onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.color = '#C9A84C'; (e.currentTarget as HTMLButtonElement).style.backgroundColor = 'rgba(201,168,76,0.05)'; }}
+                      onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.color = activeDiamondShape === s ? '#C9A84C' : 'rgba(255,255,255,0.55)'; (e.currentTarget as HTMLButtonElement).style.backgroundColor = activeDiamondShape === s ? 'rgba(201,168,76,0.06)' : 'transparent'; }}
+                    >
+                      <span style={{
+                        width: '12px', height: '12px', flexShrink: 0,
+                        border: `1px solid ${activeDiamondShape === s ? '#C9A84C' : 'rgba(255,255,255,0.2)'}`,
+                        backgroundColor: activeDiamondShape === s ? '#C9A84C' : 'transparent',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      }}>
+                        {activeDiamondShape === s && <span style={{ width: '5px', height: '5px', backgroundColor: '#fff' }} />}
+                      </span>
+                      {s}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <div style={{ width: '1px', height: '20px', backgroundColor: 'rgba(201,168,76,0.1)' }} />
+
+            {/* ── METALS ── */}
+            <div style={{ position: 'relative' }}>
+              <button
+                onClick={() => setActiveFilterPanel(activeFilterPanel === 'metalType' ? null : 'metalType')}
+                style={{
+                  display: 'flex', alignItems: 'center', gap: '5px',
+                  padding: '12px 18px',
+                  background: 'none', border: 'none', cursor: 'pointer',
+                  fontSize: '9px', letterSpacing: '0.2em', textTransform: 'uppercase',
+                  color: activeMetalType || activeFilterPanel === 'metalType' ? '#C9A84C' : 'rgba(255,255,255,0.45)',
+                  borderBottom: activeMetalType ? '2px solid #C9A84C' : '2px solid transparent',
+                  transition: 'color 0.2s',
+                }}
+                onMouseEnter={e => { if (!activeMetalType) (e.currentTarget as HTMLButtonElement).style.color = '#fff'; }}
+                onMouseLeave={e => { if (!activeMetalType) (e.currentTarget as HTMLButtonElement).style.color = activeFilterPanel === 'metalType' ? '#C9A84C' : 'rgba(255,255,255,0.45)'; }}
+              >
+                {activeMetalType || 'Metals'}
+                <ChevronDown size={9} style={{ transition: 'transform 0.2s', transform: activeFilterPanel === 'metalType' ? 'rotate(180deg)' : 'none' }} />
+              </button>
+
+              {activeFilterPanel === 'metalType' && (
+                <div style={{
+                  position: 'absolute', top: '100%', left: 0,
+                  backgroundColor: '#111', border: '1px solid rgba(201,168,76,0.18)',
+                  boxShadow: '0 16px 40px rgba(0,0,0,0.85)',
+                  minWidth: '220px', zIndex: 60, padding: '8px 0',
+                }}>
+                  <div style={{ padding: '8px 16px 6px', borderBottom: '1px solid rgba(201,168,76,0.08)' }}>
+                    <span style={{ fontSize: '7px', letterSpacing: '0.3em', textTransform: 'uppercase', color: 'rgba(201,168,76,0.45)' }}>Select Metal</span>
+                  </div>
+                  {FILTER_METALS.map(m => (
+                    <button
+                      key={m}
+                      onClick={() => applyFilter('metalType', m)}
+                      style={{
+                        display: 'flex', alignItems: 'center', gap: '10px',
+                        width: '100%', padding: '9px 16px',
+                        background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left',
+                        fontSize: '10px', letterSpacing: '0.12em', textTransform: 'uppercase',
+                        color: activeMetalType === m ? '#C9A84C' : 'rgba(255,255,255,0.55)',
+                        backgroundColor: activeMetalType === m ? 'rgba(201,168,76,0.06)' : 'transparent',
+                        transition: 'color 0.15s, background 0.15s',
+                      }}
+                      onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.color = '#C9A84C'; (e.currentTarget as HTMLButtonElement).style.backgroundColor = 'rgba(201,168,76,0.05)'; }}
+                      onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.color = activeMetalType === m ? '#C9A84C' : 'rgba(255,255,255,0.55)'; (e.currentTarget as HTMLButtonElement).style.backgroundColor = activeMetalType === m ? 'rgba(201,168,76,0.06)' : 'transparent'; }}
+                    >
+                      <span style={{
+                        width: '16px', height: '16px', flexShrink: 0,
+                        borderRadius: '50%',
+                        backgroundColor: METAL_SWATCHES[m] ?? '#ccc',
+                        border: `2px solid ${activeMetalType === m ? '#C9A84C' : 'rgba(255,255,255,0.15)'}`,
+                        boxShadow: activeMetalType === m ? '0 0 0 2px rgba(201,168,76,0.3)' : 'none',
+                        transition: 'border-color 0.2s',
+                      }} />
+                      {m}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Clear filters */}
+            {hasAdvancedFilters && (
+              <>
+                <div style={{ width: '1px', height: '20px', backgroundColor: 'rgba(201,168,76,0.1)', marginLeft: 'auto' }} />
+                <button
+                  onClick={clearAdvancedFilters}
+                  style={{
+                    display: 'flex', alignItems: 'center', gap: '5px',
+                    padding: '12px 16px',
+                    background: 'none', border: 'none', cursor: 'pointer',
+                    fontSize: '8px', letterSpacing: '0.2em', textTransform: 'uppercase',
+                    color: 'rgba(201,168,76,0.6)',
+                    transition: 'color 0.2s',
+                  }}
+                  onMouseEnter={e => (e.currentTarget.style.color = '#C9A84C')}
+                  onMouseLeave={e => (e.currentTarget.style.color = 'rgba(201,168,76,0.6)')}
+                >
+                  <X size={9} /> Clear
+                </button>
+              </>
+            )}
+
+          </div>
+        </div>
+      )}
 
       {/* ── MOBILE MENU ── */}
       {mobileOpen && (

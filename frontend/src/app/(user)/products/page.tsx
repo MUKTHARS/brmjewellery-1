@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useCallback, useMemo } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { Search, X, ChevronDown, ChevronUp, SlidersHorizontal, ArrowRight, ShoppingBag } from 'lucide-react';
 import Link from 'next/link';
@@ -13,13 +13,33 @@ import { resolveImageUrl } from '@/lib/resolveImageUrl';
 
 interface Product {
   id: string; slug: string; title: string; baseCost: number;
-  metalType?: string; carat?: string; brand?: string; weightGrams?: number; isActive: boolean;
+  metalType?: string; metalColor?: string; carat?: string;
+  gemstone?: string; diamondShape?: string;
+  brand?: string; weightGrams?: number; isActive: boolean;
   images?: { url: string }[]; category?: { id: string; name: string };
 }
+
+// Maps UI label → API metalType value (GOLD/SILVER/PLATINUM)
+const METAL_TYPE_MAP: Record<string, string> = {
+  'Yellow Gold': 'GOLD',
+  'White Gold':  'GOLD',
+  'Rose Gold':   'GOLD',
+  'Silver':      'SILVER',
+  'Platinum':    'PLATINUM',
+};
 interface Category { id: string; name: string; slug: string }
 
-const METAL_TYPES = ['Gold', 'Silver', 'Platinum'];
+const METAL_TYPES = ['Yellow Gold', 'White Gold', 'Rose Gold', 'Silver', 'Platinum'];
+const METAL_SWATCHES: Record<string, string> = {
+  'Yellow Gold': '#C9A84C',
+  'White Gold':  '#E8E8E8',
+  'Rose Gold':   '#E8B4A0',
+  'Silver':      '#C0C0C0',
+  'Platinum':    '#8E9093',
+};
 const CARATS = ['9ct', '14ct', '18ct', '22ct', '24ct'];
+const GEMSTONES = ['Diamond', 'Ruby', 'Sapphire', 'Emerald', 'Pearl', 'Amethyst', 'Aquamarine', 'Opal', 'Garnet', 'Topaz'];
+const DIAMOND_SHAPES = ['Round', 'Princess', 'Oval', 'Marquise', 'Pear', 'Cushion', 'Emerald Cut', 'Radiant', 'Asscher', 'Heart'];
 const WEIGHT_RANGES = [
   { label: 'Under 5g', min: 0, max: 5 },
   { label: '5g – 15g', min: 5, max: 15 },
@@ -242,8 +262,10 @@ export default function ProductsPage() {
 
   const [search, setSearch] = useState(searchParams.get('search') || '');
   const [categoryId, setCategoryId] = useState(searchParams.get('categoryId') || '');
-  const [metalType, setMetalType] = useState('');
+  const [metalType, setMetalType] = useState(searchParams.get('metalType') || '');
   const [carat, setCarat] = useState('');
+  const [gemstone, setGemstone] = useState(searchParams.get('gemstone') || '');
+  const [diamondShape, setDiamondShape] = useState(searchParams.get('diamondShape') || '');
   const [brand, setBrand] = useState('');
   const [weightRange, setWeightRange] = useState<number | null>(null);
   const [priceRange, setPriceRange] = useState<number | null>(null);
@@ -257,14 +279,26 @@ export default function ProductsPage() {
     setLoading(true);
     try {
       const wr = weightRange !== null ? WEIGHT_RANGES[weightRange] : null;
+      const pr = priceRange !== null ? PRICE_RANGES[priceRange] : null;
       const { data } = await productApi.getAll({
         page, limit: 24, isActive: 'true',
-        search: search || undefined,
-        categoryId: categoryId || undefined,
-        metalType: metalType ? metalType.toUpperCase() : undefined,
-        brand: brand || undefined,
-        minWeight: wr ? String(wr.min) : undefined,
-        maxWeight: wr && wr.max !== Infinity ? String(wr.max) : undefined,
+        search:       search       || undefined,
+        categoryId:   categoryId   || undefined,
+        metalType:    metalType    ? METAL_TYPE_MAP[metalType] ?? metalType.toUpperCase() : undefined,
+        carat:        carat        || undefined,
+        brand:        brand        || undefined,
+        gemstone:     gemstone     || undefined,
+        diamondShape: diamondShape || undefined,
+        minWeight:    wr           ? String(wr.min) : undefined,
+        maxWeight:    wr && wr.max !== Infinity ? String(wr.max) : undefined,
+        minPrice:     pr           ? String(pr.min) : undefined,
+        maxPrice:     pr && pr.max !== Infinity ? String(pr.max) : undefined,
+        sortBy:       sort === 'price-asc' || sort === 'price-desc' ? 'baseCost'
+                    : sort === 'name-asc'  || sort === 'name-desc'  ? 'title'
+                    : undefined,
+        order:        sort === 'price-asc' || sort === 'name-asc' ? 'asc'
+                    : sort === 'price-desc' || sort === 'name-desc' ? 'desc'
+                    : undefined,
       });
       const list: Product[] = data.data ?? [];
       const withImages = await Promise.all(
@@ -282,29 +316,19 @@ export default function ProductsPage() {
     } finally {
       setLoading(false);
     }
-  }, [page, search, categoryId, metalType, brand, weightRange]);
+  }, [page, search, categoryId, metalType, carat, brand, gemstone, diamondShape, weightRange, priceRange, sort]);
 
   useEffect(() => { fetchProducts(); }, [fetchProducts]);
 
-  const displayProducts = useMemo(() => {
-    let list = [...products];
-    if (carat) list = list.filter(p => p.carat?.toLowerCase().includes(carat.toLowerCase().replace('ct', '')));
-    if (priceRange !== null) {
-      const r = PRICE_RANGES[priceRange];
-      list = list.filter(p => Number(p.baseCost) >= r.min && Number(p.baseCost) < r.max);
-    }
-    if (sort === 'price-asc') list.sort((a, b) => Number(a.baseCost) - Number(b.baseCost));
-    else if (sort === 'price-desc') list.sort((a, b) => Number(b.baseCost) - Number(a.baseCost));
-    else if (sort === 'name-asc') list.sort((a, b) => a.title.localeCompare(b.title));
-    else if (sort === 'name-desc') list.sort((a, b) => b.title.localeCompare(a.title));
-    return list;
-  }, [products, carat, priceRange, sort]);
+  // All filtering and sorting is now server-side; displayProducts is a pass-through
+  const displayProducts = products;
 
   const resetFilters = () => {
     setSearch(''); setCategoryId(''); setMetalType('');
-    setCarat(''); setBrand(''); setWeightRange(null); setPriceRange(null); setSort('featured'); setPage(1);
+    setCarat(''); setGemstone(''); setDiamondShape('');
+    setBrand(''); setWeightRange(null); setPriceRange(null); setSort('featured'); setPage(1);
   };
-  const hasFilters = !!(search || categoryId || metalType || carat || brand || weightRange !== null || priceRange !== null);
+  const hasFilters = !!(search || categoryId || metalType || carat || gemstone || diamondShape || brand || weightRange !== null || priceRange !== null);
 
   const handleAddToCart = (p: Product) => {
     addItem({
@@ -353,10 +377,40 @@ export default function ProductsPage() {
         </ul>
       </FilterSection>
 
-      <FilterSection title="Metal Type">
+      <FilterSection title="Gemstones">
+        <ul style={{ margin: 0, padding: 0, display: 'flex', flexDirection: 'column', gap: '10px' }}>
+          {GEMSTONES.map(g => (
+            <CheckItem key={g} label={g} active={gemstone === g} onClick={() => { setGemstone(gemstone === g ? '' : g); setPage(1); }} />
+          ))}
+        </ul>
+      </FilterSection>
+
+      <FilterSection title="Diamond Shape">
+        <ul style={{ margin: 0, padding: 0, display: 'flex', flexDirection: 'column', gap: '10px' }}>
+          {DIAMOND_SHAPES.map(s => (
+            <CheckItem key={s} label={s} active={diamondShape === s} onClick={() => { setDiamondShape(diamondShape === s ? '' : s); setPage(1); }} />
+          ))}
+        </ul>
+      </FilterSection>
+
+      <FilterSection title="Metals">
         <ul style={{ margin: 0, padding: 0, display: 'flex', flexDirection: 'column', gap: '10px' }}>
           {METAL_TYPES.map(m => (
-            <CheckItem key={m} label={m} active={metalType === m} onClick={() => { setMetalType(metalType === m ? '' : m); setPage(1); }} />
+            <li key={m} style={{ listStyle: 'none' }}>
+              <button
+                onClick={() => { setMetalType(metalType === m ? '' : m); setPage(1); }}
+                style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, display: 'flex', alignItems: 'center', gap: '10px' }}
+              >
+                <span style={{
+                  width: '18px', height: '18px', flexShrink: 0, borderRadius: '50%',
+                  backgroundColor: METAL_SWATCHES[m] ?? '#ccc',
+                  border: `2px solid ${metalType === m ? '#C9A84C' : '#e5e5e5'}`,
+                  boxShadow: metalType === m ? '0 0 0 2px rgba(201,168,76,0.3)' : 'none',
+                  transition: 'border-color 0.2s, box-shadow 0.2s',
+                }} />
+                <span style={{ fontSize: '13px', color: metalType === m ? '#C9A84C' : '#6B6B6B' }}>{m}</span>
+              </button>
+            </li>
           ))}
         </ul>
       </FilterSection>
@@ -461,6 +515,8 @@ export default function ProductsPage() {
             {categoryId && <Chip label={categories.find(c => c.id === categoryId)?.name ?? 'Category'} onRemove={() => setCategoryId('')} />}
             {metalType && <Chip label={metalType} onRemove={() => setMetalType('')} />}
             {carat && <Chip label={carat} onRemove={() => setCarat('')} />}
+            {gemstone && <Chip label={gemstone} onRemove={() => setGemstone('')} />}
+            {diamondShape && <Chip label={`${diamondShape} Cut`} onRemove={() => setDiamondShape('')} />}
             {brand && <Chip label={`Brand: ${brand}`} onRemove={() => setBrand('')} />}
             {weightRange !== null && <Chip label={WEIGHT_RANGES[weightRange].label} onRemove={() => setWeightRange(null)} />}
             {priceRange !== null && <Chip label={PRICE_RANGES[priceRange].label} onRemove={() => setPriceRange(null)} />}

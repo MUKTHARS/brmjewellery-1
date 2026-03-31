@@ -21,12 +21,21 @@ export const createProduct = asyncHandler(async (req: Request, res: Response) =>
 export const getProducts = asyncHandler(async (req: Request, res: Response) => {
   const pagination = getPagination(req);
   const { products, total } = await productService.getProducts(pagination, {
-    categoryId: req.query.categoryId as string,
-    search: req.query.search as string,
-    isActive: req.query.isActive as string,
-    metalType: req.query.metalType as string,
-    sortBy: req.query.sortBy as string,
-    order: req.query.order as string,
+    categoryId:   req.query.categoryId   as string,
+    search:       req.query.search       as string,
+    isActive:     req.query.isActive     as string,
+    metalType:    req.query.metalType    as string,
+    metalColor:   req.query.metalColor   as string,
+    carat:        req.query.carat        as string,
+    brand:        req.query.brand        as string,
+    gemstone:     req.query.gemstone     as string,
+    diamondShape: req.query.diamondShape as string,
+    minWeight:    req.query.minWeight    as string,
+    maxWeight:    req.query.maxWeight    as string,
+    minPrice:     req.query.minPrice     as string,
+    maxPrice:     req.query.maxPrice     as string,
+    sortBy:       req.query.sortBy       as string,
+    order:        req.query.order        as string,
   });
   sendSuccess(res, products, 'Products retrieved', HTTP_STATUS.OK, buildPaginationMeta(total, pagination.page, pagination.limit));
 });
