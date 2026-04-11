@@ -17,7 +17,7 @@ const getAccessToken = async (): Promise<string> => {
     `${PAYPAL_BASE}/v1/oauth2/token`,
     'grant_type=client_credentials',
     {
-      auth: { username: env.PAYPAL_CLIENT_ID, password: env.PAYPAL_CLIENT_SECRET },
+      auth: { username: env.PAYPAL_CLIENT_ID ?? '', password: env.PAYPAL_CLIENT_SECRET ?? '' },
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
     },
   );

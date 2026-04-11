@@ -1,11 +1,11 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { paymentApi } from '@/api/payment.api';
 import { useCart } from '@/contexts/CartContext';
 
-export default function ClearpayReturnPage() {
+function ClearpayReturnPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { clearCart } = useCart();
@@ -45,4 +45,8 @@ export default function ClearpayReturnPage() {
       <p className="text-sm text-ink-muted">{message}</p>
     </div>
   );
+}
+
+export default function ClearpayReturnPageWrapper() {
+  return <Suspense fallback={null}><ClearpayReturnPage /></Suspense>;
 }

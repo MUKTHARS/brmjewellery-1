@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { Suspense, useEffect, useState, useCallback } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { Search, X, ChevronDown, ChevronUp, SlidersHorizontal, ArrowRight, ShoppingBag } from 'lucide-react';
 import Link from 'next/link';
@@ -248,7 +248,7 @@ function ProductCardLuxury({ product: p, onAddToCart }: { product: Product; onAd
   );
 }
 
-export default function ProductsPage() {
+function ProductsPage() {
   const searchParams = useSearchParams();
   const { addItem } = useCart();
 
@@ -705,4 +705,8 @@ export default function ProductsPage() {
 
     </div>
   );
+}
+
+export default function ProductsPageWrapper() {
+  return <Suspense fallback={null}><ProductsPage /></Suspense>;
 }

@@ -1,12 +1,12 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { Suspense, useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
 import toast from 'react-hot-toast';
 
-export default function LoginPage() {
+function LoginPage() {
   const { login, user, loading } = useAuth();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -102,4 +102,8 @@ export default function LoginPage() {
       </div>
     </div>
   );
+}
+
+export default function LoginPageWrapper() {
+  return <Suspense fallback={null}><LoginPage /></Suspense>;
 }

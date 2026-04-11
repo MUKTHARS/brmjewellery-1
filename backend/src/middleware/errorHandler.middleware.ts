@@ -22,7 +22,7 @@ export const errorHandler = (
 
   // Prisma errors
   if (err.constructor.name === 'PrismaClientKnownRequestError') {
-    const prismaErr = err as { code: string; meta?: { target?: string[] } };
+    const prismaErr = err as unknown as { code: string; meta?: { target?: string[] } };
     if (prismaErr.code === 'P2002') {
       const field = prismaErr.meta?.target?.[0] ?? 'field';
       res.status(HTTP_STATUS.CONFLICT).json({

@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { Suspense } from 'react';
 import { AuthProvider } from '@/contexts/AuthContext';
 import { CartProvider } from '@/contexts/CartContext';
 import Header from '@/components/user/Header';
@@ -16,11 +17,11 @@ export default function UserLayout({ children }: { children: React.ReactNode }) 
   return (
     <AuthProvider>
       <CartProvider>
-        <Header />
+        <Suspense fallback={null}><Header /></Suspense>
         <main className="min-h-screen">{children}</main>
         <Footer />
-        <LiveChat />
-        <EntryPopup />
+        <Suspense fallback={null}><LiveChat /></Suspense>
+        <Suspense fallback={null}><EntryPopup /></Suspense>
         <Toaster position="top-right" toastOptions={{ style: { fontFamily: 'var(--font-didact)', fontSize: '13px' } }} />
       </CartProvider>
     </AuthProvider>

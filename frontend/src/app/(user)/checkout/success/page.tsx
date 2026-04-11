@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { CheckCircle2, Package, ArrowRight } from 'lucide-react';
@@ -13,7 +13,7 @@ interface Order {
   fulfillmentStatus: string; items: { id: string; productTitle: string; quantity: number; priceAtPurchaseGBP: number }[];
 }
 
-export default function OrderSuccessPage() {
+function OrderSuccessPage() {
   const searchParams = useSearchParams();
   const orderId = searchParams.get('orderId');
   const [order, setOrder] = useState<Order | null>(null);
@@ -71,4 +71,8 @@ export default function OrderSuccessPage() {
       </div>
     </div>
   );
+}
+
+export default function OrderSuccessPageWrapper() {
+  return <Suspense fallback={null}><OrderSuccessPage /></Suspense>;
 }

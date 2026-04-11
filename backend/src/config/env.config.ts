@@ -20,9 +20,15 @@ const envSchema = z.object({
   BANK_SORT_CODE: z.string().default('00-00-00'),
   BANK_ACCOUNT_NUMBER: z.string().default('00000000'),
 
+  // Stripe
+  STRIPE_SECRET_KEY: z.string().optional(),
+  STRIPE_PUBLISHABLE_KEY: z.string().optional(),
+  STRIPE_WEBHOOK_SECRET: z.string().optional(),
+
   // PayPal (sandbox credentials from developer.paypal.com)
   PAYPAL_CLIENT_ID: z.string().optional(),
   PAYPAL_CLIENT_SECRET: z.string().optional(),
+  PAYPAL_MODE: z.enum(['sandbox', 'live']).default('sandbox'),
   PAYPAL_BASE_URL: z.string().default('https://api-m.sandbox.paypal.com'),
 
   // Klarna (playground credentials from portal.klarna.com)

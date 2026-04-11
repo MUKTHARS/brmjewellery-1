@@ -30,7 +30,7 @@ export const fetchAndCacheMetalPrices = async (): Promise<void> => {
     };
 
     // Build per-carat prices
-    const rows: Array<{ metal: string; carat: string | null; pricePerGramGBP: number }> = [
+    const rows: Array<{ metal: string; carat: string; pricePerGramGBP: number }> = [
       { metal: 'SILVER', carat: '925', pricePerGramGBP: pricesPerGram.silver * PURITY_MULTIPLIERS['925'] },
       { metal: 'PLATINUM', carat: '950', pricePerGramGBP: pricesPerGram.platinum * PURITY_MULTIPLIERS['950'] },
     ];

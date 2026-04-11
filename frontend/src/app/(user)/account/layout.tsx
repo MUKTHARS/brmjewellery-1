@@ -46,7 +46,7 @@ export default function AccountLayout({ children }: { children: React.ReactNode 
                 <Icon size={15} /> {label}
               </Link>
             ))}
-            <button onClick={logout}
+            <button onClick={() => logout()}
               className="flex items-center gap-2.5 px-3 py-2.5 text-sm text-ink-muted hover:text-danger w-full text-left transition-colors">
               <LogOut size={15} /> Sign Out
             </button>
