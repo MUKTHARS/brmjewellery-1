@@ -19,7 +19,7 @@ export default function TermsPage() {
 
         <section>
           <h2 className="text-sm font-semibold uppercase tracking-wider text-ink mb-3">2. About Us</h2>
-          <p>BRM Jewellery Ltd is registered in England and Wales. Our address is Hatton Garden, London, EC1N 8HN. VAT registered. You can contact us at <a href="mailto:hello@brmjewellery.co.uk" className="text-gold hover:underline">hello@brmjewellery.co.uk</a>.</p>
+          <p>BRM Jewellery Ltd is registered in England and Wales. Our address is 3 Selkirk Road, London, England, SW17 0ER. VAT registered. You can contact us at <a href="mailto:hello@brmjewellery.co.uk" className="text-gold hover:underline">hello@brmjewellery.co.uk</a>.</p>
         </section>
 
         <section>

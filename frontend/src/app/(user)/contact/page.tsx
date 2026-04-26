@@ -59,7 +59,7 @@ export default function ContactPage() {
                   <MapPin size={18} className="text-gold mt-0.5 flex-shrink-0" />
                   <div>
                     <p className="text-sm font-medium text-ink">Workshop Address</p>
-                    <p className="text-sm text-ink-muted mt-0.5">Hatton Garden<br />London, EC1N 8HN<br />United Kingdom</p>
+                    <p className="text-sm text-ink-muted mt-0.5">3 Selkirk Road<br />London, England, SW17 0ER<br />United Kingdom</p>
                   </div>
                 </li>
                 <li className="flex gap-4">

@@ -49,7 +49,7 @@ export default function AboutPage() {
             </h2>
             <div className="space-y-4 text-ink-muted text-sm leading-relaxed">
               <p>
-                BRM Jewellery is an independent luxury jeweller based in Hatton Garden, London — the historic centre of the UK jewellery trade. We specialise in handcrafted fine jewellery using gold, silver, and platinum, finished to the highest standard.
+                BRM Jewellery is an independent luxury jeweller based in London. We specialise in handcrafted fine jewellery using gold, silver, and platinum, finished to the highest standard.
               </p>
               <p>
                 Unlike large retail chains, every piece we create is made individually by our master goldsmiths. We work directly with our customers to understand what they want — whether it is a ready-made collection piece or a fully bespoke commission designed from scratch.
@@ -131,7 +131,7 @@ export default function AboutPage() {
                   <MapPin size={18} className="text-gold mt-0.5 flex-shrink-0" />
                   <div>
                     <p className="text-white text-sm font-medium">BRM Jewellery Workshop</p>
-                    <p className="text-white/50 text-sm mt-0.5">Hatton Garden<br />London, EC1N 8HN<br />United Kingdom</p>
+                    <p className="text-white/50 text-sm mt-0.5">3 Selkirk Road<br />London, England, SW17 0ER<br />United Kingdom</p>
                   </div>
                 </li>
                 <li className="flex items-center gap-4">
@@ -158,8 +158,8 @@ export default function AboutPage() {
             <div className="bg-white/5 border border-white/10 aspect-video flex items-center justify-center">
               <div className="text-center">
                 <MapPin size={32} className="text-gold mx-auto mb-3" />
-                <p className="text-white/50 text-sm">Hatton Garden, London</p>
-                <p className="text-white/30 text-xs mt-1">EC1N 8HN</p>
+                <p className="text-white/50 text-sm">Selkirk Road, London</p>
+                <p className="text-white/30 text-xs mt-1">SW17 0ER</p>
               </div>
             </div>
           </div>

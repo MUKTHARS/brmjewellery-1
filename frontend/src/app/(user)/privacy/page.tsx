@@ -13,7 +13,7 @@ export default function PrivacyPage() {
 
         <section>
           <h2 className="text-sm font-semibold uppercase tracking-wider text-ink mb-3">1. Who We Are</h2>
-          <p>BRM Jewellery Ltd ("BRM", "we", "us", "our") is a company registered in England and Wales. Our registered address is Hatton Garden, London, EC1N 8HN. We operate the website brmjewellery.com.</p>
+          <p>BRM Jewellery Ltd ("BRM", "we", "us", "our") is a company registered in England and Wales. Our registered address is 3 Selkirk Road, London, England, SW17 0ER. We operate the website brmjewellery.com.</p>
           <p className="mt-2">For questions about this policy, contact us at: <a href="mailto:privacy@brmjewellery.co.uk" className="text-gold hover:underline">privacy@brmjewellery.co.uk</a></p>
         </section>
 

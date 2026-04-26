@@ -287,8 +287,8 @@ export default async function HomePage() {
               <p style={{ color: '#C9A84C', fontSize: '10px', letterSpacing: '0.35em', textTransform: 'uppercase', marginBottom: '20px' }}>Our Workshop</p>
               <address style={{ fontStyle: 'normal', fontSize: '14px', color: 'rgba(255,255,255,0.5)', lineHeight: 2 }}>
                 <p style={{ color: '#fff', fontWeight: 500, marginBottom: '8px' }}>BRM Jewellery Ltd</p>
-                <p>Hatton Garden</p>
-                <p>London, EC1N 8HN</p>
+                <p>3 Selkirk Road</p>
+                <p>London, England, SW17 0ER</p>
                 <p>United Kingdom</p>
                 <p style={{ marginTop: '16px' }}>
                   <a href="tel:+442071234567" className="text-white/50 no-underline hover:text-[#C9A84C] transition-colors">

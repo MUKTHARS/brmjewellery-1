@@ -45,7 +45,7 @@ const FAQS = [
   {
     section: 'Appointments & Visits',
     items: [
-      { q: 'Can I visit your workshop in person?', a: 'Yes, we welcome visitors to our Hatton Garden workshop by appointment. Please book in advance using our Appointments page so we can give you our full attention.' },
+      { q: 'Can I visit your workshop in person?', a: 'Yes, we welcome visitors to our workshop by appointment. Please book in advance using our Appointments page so we can give you our full attention.' },
       { q: 'What happens at an appointment?', a: 'Appointments are private consultations — you can browse our collection, discuss a bespoke design, or simply get expert advice on jewellery care and selection. No obligation to purchase.' },
       { q: 'How far in advance should I book?', a: 'We recommend booking at least 2–3 days ahead. For weekends, earlier booking is advised as slots fill quickly.' },
     ],

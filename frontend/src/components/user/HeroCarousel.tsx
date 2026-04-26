@@ -225,7 +225,7 @@ function Slide3({ out }: { out: boolean }) {
             <div style={{ display: 'flex', alignItems: 'center', gap: '14px', marginBottom: '18px' }}>
               <div style={{ width: '36px', height: '1px', background: '#C9A84C' }} />
               <span style={{ color: '#C9A84C', fontSize: '9px', letterSpacing: '0.4em', textTransform: 'uppercase' }}>
-                Hatton Garden · London
+                Selkirk Road · London
               </span>
             </div>
             <h1 style={{
@@ -237,7 +237,7 @@ function Slide3({ out }: { out: boolean }) {
               <em style={{ color: '#C9A84C', fontStyle: 'italic' }}>Elegance</em> &amp; Craftsmanship
             </h1>
             <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: '13px', lineHeight: 1.85, maxWidth: '400px' }}>
-              From engagement rings to statement pieces — visit our Hatton Garden workshop or commission entirely online.
+              From engagement rings to statement pieces — visit our London workshop or commission entirely online.
             </p>
           </div>
 
