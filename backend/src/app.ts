@@ -10,6 +10,8 @@ import { errorHandler } from './middleware/errorHandler.middleware';
 import { notFound } from './middleware/notFound.middleware';
 import apiRoutes from './routes/index.routes';
 import { env } from './config/env.config';
+import { stripeWebhookMiddleware } from './middleware/stripeWebhook.middleware';
+import { handleStripeWebhook } from './controllers/payment.controller';
 
 const app = express();
 
@@ -22,6 +24,9 @@ app.use(compression());
 
 // Logging
 app.use(requestLogger);
+
+// Stripe webhook must be mounted BEFORE express.json() — Stripe requires the raw request body
+app.post(`/api/${env.API_VERSION}/payment/stripe/webhook`, stripeWebhookMiddleware, handleStripeWebhook);
 
 // Body parsing
 app.use(express.json({ limit: '10mb' }));

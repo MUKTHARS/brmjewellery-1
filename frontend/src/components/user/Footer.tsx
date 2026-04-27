@@ -42,7 +42,8 @@ export default function Footer() {
           <div>
             <h4 className="text-xs uppercase tracking-widest text-white/40 mb-4">Contact</h4>
             <ul className="space-y-2 text-xs text-white/50">
-              <li>3 Selkirk Road, London, England, SW17 0ER</li>
+              <li>Branch 1: 3 Selkirk Road, London, England, SW17 0ER</li>
+              <li>Branch 2: 1st Floor Suite 8A, 34-35 Hatton Garden, London EC1N 8DX</li>
               <li><a href="mailto:hello@brmjewellery.co.uk" className="hover:text-gold transition-colors">hello@brmjewellery.co.uk</a></li>
               <li><a href="tel:+442071234567" className="hover:text-gold transition-colors">+44 (0)20 7123 4567</a></li>
               <li>Mon–Sat, 10am–6pm GMT</li>

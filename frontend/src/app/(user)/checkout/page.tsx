@@ -3,6 +3,8 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { PayPalScriptProvider, PayPalButtons, usePayPalScriptReducer } from '@paypal/react-paypal-js';
+import { Elements, CardElement, useStripe, useElements } from '@stripe/react-stripe-js';
+import { loadStripe } from '@stripe/stripe-js';
 import { Lock, ChevronDown, ChevronUp, Building2 } from 'lucide-react';
 import { useCart } from '@/contexts/CartContext';
 import { useAuth } from '@/contexts/AuthContext';
@@ -12,6 +14,10 @@ import { paypalApi } from '@/api/paypal.api';
 import { formatGBP } from '@/lib/formatCurrency';
 import { resolveImageUrl } from '@/lib/resolveImageUrl';
 import toast from 'react-hot-toast';
+
+const stripePromise = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY
+  ? loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY)
+  : null;
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -145,51 +151,75 @@ const PAYMENT_METHODS: { id: PaymentMethod; label: string; sub: string; icon: Re
   },
 ];
 
-// ── Card form (visual — payment collected via terminal) ───────────────────────
+// ── Stripe card form ──────────────────────────────────────────────────────────
 
-function CardForm({ method, total, onPay, paying }: {
-  method: PaymentMethod; total: number; onPay: () => void; paying: boolean;
+function StripeCardFormInner({ orderId, total, onSuccess }: {
+  orderId: string; total: number; onSuccess: () => void;
 }) {
-  const [name, setName] = useState('');
-  const [number, setNumber] = useState('');
-  const [expiry, setExpiry] = useState('');
-  const [cvv, setCvv] = useState('');
+  const stripe = useStripe();
+  const elements = useElements();
+  const [paying, setPaying] = useState(false);
 
-  const formatNumber = (v: string) =>
-    v.replace(/\D/g, '').slice(0, 16).replace(/(.{4})/g, '$1 ').trim();
-  const formatExpiry = (v: string) => {
-    const d = v.replace(/\D/g, '').slice(0, 4);
-    return d.length >= 3 ? `${d.slice(0, 2)} / ${d.slice(2)}` : d;
+  const handlePay = async () => {
+    if (!stripe || !elements) return;
+    setPaying(true);
+    try {
+      const res = await paymentApi.createStripeIntent(orderId);
+      const { clientSecret } = res.data.data as { clientSecret: string };
+      const card = elements.getElement(CardElement);
+      if (!card) { toast.error('Card element not ready'); setPaying(false); return; }
+      const { error, paymentIntent } = await stripe.confirmCardPayment(clientSecret, {
+        payment_method: { card },
+      });
+      if (error) {
+        toast.error(error.message || 'Payment failed. Please try again.');
+        setPaying(false);
+        return;
+      }
+      if (paymentIntent?.status === 'succeeded') {
+        onSuccess();
+      }
+    } catch {
+      toast.error('Payment failed. Please try again.');
+      setPaying(false);
+    }
   };
 
   return (
     <div className="space-y-4">
-      <p className="text-xs text-ink-muted">
-        Your {method === 'visa' ? 'Visa' : 'Mastercard'} card details are used to confirm your identity. Payment is collected via our secure in-store terminal.
-      </p>
-      <div>
-        <label className="label-base">Name on Card</label>
-        <input value={name} onChange={(e) => setName(e.target.value)} placeholder="J. Smith" className="input-base" />
+      <p className="text-xs text-ink-muted">Enter your card details below. Your payment is processed securely by Stripe.</p>
+      <div className="border border-gold/20 px-3 py-3.5 bg-white">
+        <CardElement options={{
+          style: {
+            base: { fontSize: '14px', color: '#1a1a1a', fontFamily: 'system-ui, sans-serif', '::placeholder': { color: '#9ca3af' } },
+            invalid: { color: '#dc2626' },
+          },
+          hidePostalCode: true,
+        }} />
       </div>
-      <div>
-        <label className="label-base">Card Number</label>
-        <input value={number} onChange={(e) => setNumber(formatNumber(e.target.value))} placeholder="1234 5678 9012 3456" inputMode="numeric" maxLength={19} className="input-base font-mono tracking-widest" />
-      </div>
-      <div className="grid grid-cols-2 gap-3">
-        <div>
-          <label className="label-base">Expiry</label>
-          <input value={expiry} onChange={(e) => setExpiry(formatExpiry(e.target.value))} placeholder="MM / YY" inputMode="numeric" maxLength={7} className="input-base" />
-        </div>
-        <div>
-          <label className="label-base">CVV</label>
-          <input value={cvv} onChange={(e) => setCvv(e.target.value.replace(/\D/g, '').slice(0, 4))} placeholder="123" inputMode="numeric" maxLength={4} className="input-base" type="password" />
-        </div>
-      </div>
-      <button type="button" onClick={onPay} disabled={paying || !name || number.replace(/\s/g, '').length < 16 || expiry.length < 7 || cvv.length < 3}
+      <button type="button" onClick={handlePay} disabled={!stripe || paying}
         className="w-full btn-gold py-3.5 flex items-center justify-center gap-2 text-sm uppercase tracking-widest disabled:opacity-60">
         <Lock size={14} />{paying ? 'Processing…' : `Pay ${formatGBP(total)}`}
       </button>
     </div>
+  );
+}
+
+function StripeCardForm({ orderId, total, onSuccess }: {
+  orderId: string; total: number; onSuccess: () => void;
+}) {
+  if (!stripePromise) {
+    return (
+      <div className="text-center py-6 space-y-2">
+        <p className="text-sm text-ink-muted">Card payments are not yet configured.</p>
+        <p className="text-xs text-ink-muted">Please choose another payment method or contact us.</p>
+      </div>
+    );
+  }
+  return (
+    <Elements stripe={stripePromise}>
+      <StripeCardFormInner orderId={orderId} total={total} onSuccess={onSuccess} />
+    </Elements>
   );
 }
 
@@ -616,7 +646,7 @@ export default function CheckoutPage() {
               <div className="flex items-center gap-1.5 text-xs text-ink-muted mb-5">
                 <Lock size={11} />
                 <span>
-                  {CARD_METHODS.includes(selectedMethod) && 'Card details for identity only — payment collected in store'}
+                  {CARD_METHODS.includes(selectedMethod) && 'Payments processed securely by Stripe — PCI DSS compliant'}
                   {selectedMethod === 'apple_pay' && 'Apple Pay — Touch ID / Face ID authentication'}
                   {selectedMethod === 'google_pay' && 'Google Pay — secure payment via your Google account'}
                   {selectedMethod === 'paypal' && 'PayPal — pay via your PayPal account or saved card'}
@@ -626,9 +656,9 @@ export default function CheckoutPage() {
                 </span>
               </div>
 
-              {/* ── Visa / Mastercard ── */}
+              {/* ── Visa / Mastercard — Stripe Elements ── */}
               {CARD_METHODS.includes(selectedMethod) && (
-                <CardForm method={selectedMethod} total={total} onPay={handleSimplePay} paying={paying} />
+                <StripeCardForm orderId={orderId} total={total} onSuccess={handlePaymentSuccess} />
               )}
 
               {/* ── Apple Pay ── */}

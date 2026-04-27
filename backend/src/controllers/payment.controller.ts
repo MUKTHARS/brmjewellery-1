@@ -68,3 +68,24 @@ export const refundOrder = asyncHandler(async (req: Request, res: Response) => {
   const result = await paymentService.refundOrder(orderId);
   sendSuccess(res, result, 'Refund processed');
 });
+
+// ── Stripe ─────────────────────────────────────────────────────────────────────
+
+export const createStripePaymentIntent = asyncHandler(async (req: Request, res: Response) => {
+  const { orderId } = req.body;
+  if (!orderId) { sendError(res, 'orderId is required', HTTP_STATUS.BAD_REQUEST); return; }
+  const result = await paymentService.createStripePaymentIntent(orderId);
+  sendSuccess(res, result, 'Payment intent created');
+});
+
+export const handleStripeWebhook = async (req: Request, res: Response): Promise<void> => {
+  const signature = req.headers['stripe-signature'] as string;
+  if (!signature) { res.status(400).json({ error: 'Missing stripe-signature header' }); return; }
+  try {
+    const result = await paymentService.handleStripeWebhook(req.body as Buffer, signature);
+    res.json(result);
+  } catch (err) {
+    const msg = (err as Error).message;
+    res.status(400).json({ error: msg });
+  }
+};

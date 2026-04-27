@@ -1,5 +1,6 @@
 import axios from 'axios';
 import { prisma } from '../config/db.config';
+import { stripe } from '../config/stripe.config';
 import { AppError } from '../utils/apiResponse.utils';
 import { HTTP_STATUS } from '../constants/httpStatus.constants';
 import { logger } from '../utils/logger.utils';
@@ -402,4 +403,85 @@ export const refundOrder = async (orderId: string) => {
   });
 
   return { refunded: true, orderNumber: order.orderNumber };
+};
+
+// ── Stripe ─────────────────────────────────────────────────────────────────────
+
+export const createStripePaymentIntent = async (orderId: string) => {
+  if (!stripe) throw new AppError('Stripe is not configured', HTTP_STATUS.SERVICE_UNAVAILABLE);
+
+  const order = await prisma.order.findUnique({ where: { id: orderId } });
+  if (!order) throw new AppError('Order not found', HTTP_STATUS.NOT_FOUND);
+  if (order.paymentStatus === 'PAID') throw new AppError('Order already paid', HTTP_STATUS.BAD_REQUEST);
+
+  const paymentIntent = await stripe.paymentIntents.create({
+    amount: Math.round(Number(order.totalGBP) * 100),
+    currency: 'gbp',
+    description: `BRM Jewellery – ${order.orderNumber}`,
+    metadata: { orderId: order.id, orderNumber: order.orderNumber },
+  });
+
+  await prisma.order.update({
+    where: { id: orderId },
+    data: { stripePaymentId: paymentIntent.id },
+  });
+
+  return { clientSecret: paymentIntent.client_secret as string };
+};
+
+export const handleStripeWebhook = async (payload: Buffer, signature: string) => {
+  if (!stripe || !env.STRIPE_WEBHOOK_SECRET)
+    throw new AppError('Stripe webhook not configured', HTTP_STATUS.SERVICE_UNAVAILABLE);
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  let event: any;
+  try {
+    event = stripe.webhooks.constructEvent(payload, signature, env.STRIPE_WEBHOOK_SECRET);
+  } catch (err) {
+    throw new AppError(`Webhook signature verification failed: ${(err as Error).message}`, HTTP_STATUS.BAD_REQUEST);
+  }
+
+  if (event.type === 'payment_intent.succeeded') {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const pi = event.data.object as any;
+    const { orderId } = pi.metadata;
+
+    if (orderId) {
+      const order = await prisma.order.findUnique({
+        where: { id: orderId },
+        include: { user: { select: { email: true, firstName: true, lastName: true } } },
+      });
+
+      if (order && order.paymentStatus !== 'PAID') {
+        await prisma.order.update({
+          where: { id: orderId },
+          data: { paymentStatus: 'PAID', fulfillmentStatus: 'CONFIRMED' },
+        });
+
+        const customerName = `${order.user.firstName} ${order.user.lastName}`;
+        try {
+          const invoice = await generateInvoiceForOrder(orderId);
+          await sendEmail({
+            to: order.user.email,
+            subject: `Order Confirmed – ${order.orderNumber}`,
+            html: emailTemplates.orderConfirmation(order.orderNumber, customerName, Number(order.totalGBP)),
+            attachments: [{ filename: `Invoice-${order.orderNumber}.pdf`, path: invoice.pdfUrl.replace(/^\//, '') }],
+          });
+        } catch (e) {
+          logger.error(`Email/invoice failed for Stripe order ${orderId}: ${(e as Error).message}`);
+        }
+      }
+    }
+  }
+
+  if (event.type === 'payment_intent.payment_failed') {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const pi = event.data.object as any;
+    const { orderId } = pi.metadata;
+    if (orderId) {
+      await prisma.order.update({ where: { id: orderId }, data: { paymentStatus: 'FAILED' } }).catch(() => {});
+    }
+  }
+
+  return { received: true };
 };

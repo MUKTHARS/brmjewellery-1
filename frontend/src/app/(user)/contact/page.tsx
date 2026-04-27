@@ -58,8 +58,15 @@ export default function ContactPage() {
                 <li className="flex gap-4">
                   <MapPin size={18} className="text-gold mt-0.5 flex-shrink-0" />
                   <div>
-                    <p className="text-sm font-medium text-ink">Workshop Address</p>
+                    <p className="text-sm font-medium text-ink">Branch 1</p>
                     <p className="text-sm text-ink-muted mt-0.5">3 Selkirk Road<br />London, England, SW17 0ER<br />United Kingdom</p>
+                  </div>
+                </li>
+                <li className="flex gap-4">
+                  <MapPin size={18} className="text-gold mt-0.5 flex-shrink-0" />
+                  <div>
+                    <p className="text-sm font-medium text-ink">Branch 2</p>
+                    <p className="text-sm text-ink-muted mt-0.5">1st Floor Suite 8A<br />34-35 Hatton Garden<br />London EC1N 8DX<br />United Kingdom</p>
                   </div>
                 </li>
                 <li className="flex gap-4">

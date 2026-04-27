@@ -130,8 +130,15 @@ export default function AboutPage() {
                 <li className="flex items-start gap-4">
                   <MapPin size={18} className="text-gold mt-0.5 flex-shrink-0" />
                   <div>
-                    <p className="text-white text-sm font-medium">BRM Jewellery Workshop</p>
+                    <p className="text-white text-sm font-medium">Branch 1</p>
                     <p className="text-white/50 text-sm mt-0.5">3 Selkirk Road<br />London, England, SW17 0ER<br />United Kingdom</p>
+                  </div>
+                </li>
+                <li className="flex items-start gap-4">
+                  <MapPin size={18} className="text-gold mt-0.5 flex-shrink-0" />
+                  <div>
+                    <p className="text-white text-sm font-medium">Branch 2</p>
+                    <p className="text-white/50 text-sm mt-0.5">1st Floor Suite 8A<br />34-35 Hatton Garden<br />London EC1N 8DX<br />United Kingdom</p>
                   </div>
                 </li>
                 <li className="flex items-center gap-4">
