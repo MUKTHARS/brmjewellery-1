@@ -5,10 +5,11 @@ import { PaginationOptions } from '../utils/pagination.utils';
 
 export const getReviews = async (
   pagination: PaginationOptions,
-  filters: { productId?: string; rating?: string; isVisible?: string }
+  filters: { productId?: string; productSlug?: string; rating?: string; isVisible?: string }
 ) => {
   const where: Record<string, unknown> = {};
   if (filters.productId) where.productId = filters.productId;
+  if (filters.productSlug) where.product = { slug: filters.productSlug };
   if (filters.rating) where.rating = parseInt(filters.rating);
   if (filters.isVisible !== undefined) where.isVisible = filters.isVisible === 'true';
 

@@ -5,10 +5,11 @@ import { requireAdmin } from '../middleware/role.middleware';
 
 const router = Router();
 
-router.use(authenticate, requireAdmin);
-
+// Public
 router.get('/', reviewController.getReviews);
-router.patch('/:id/visibility', reviewController.toggleVisibility);
-router.delete('/:id', reviewController.deleteReview);
+
+// Admin only
+router.patch('/:id/visibility', authenticate, requireAdmin, reviewController.toggleVisibility);
+router.delete('/:id', authenticate, requireAdmin, reviewController.deleteReview);
 
 export default router;

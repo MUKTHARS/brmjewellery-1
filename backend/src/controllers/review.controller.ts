@@ -9,6 +9,7 @@ export const getReviews = asyncHandler(async (req: Request, res: Response) => {
   const pagination = getPagination(req);
   const { reviews, total } = await reviewService.getReviews(pagination, {
     productId: req.query.productId as string,
+    productSlug: req.query.productSlug as string,
     rating: req.query.rating as string,
     isVisible: req.query.isVisible as string,
   });
