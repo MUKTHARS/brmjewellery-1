@@ -19,7 +19,7 @@ interface Enquiry {
   user?: { firstName: string; lastName: string };
 }
 
-const STATUS_OPTIONS = ['', 'PENDING', 'REVIEWING', 'QUOTED', 'APPROVED', 'IN_PROGRESS', 'COMPLETED', 'CANCELLED'];
+const STATUS_OPTIONS = ['', 'NEW', 'IN_REVIEW', 'QUOTED', 'CONFIRMED', 'COMPLETED'];
 
 export default function EnquiriesPage() {
   const router = useRouter();
@@ -75,13 +75,13 @@ export default function EnquiriesPage() {
         <select value={statusFilter} onChange={(e) => { setStatusFilter(e.target.value); setPage(1); }}
           className="input-base w-40 h-9 text-xs">
           {STATUS_OPTIONS.map((s) => (
-            <option key={s} value={s}>{s || 'All Statuses'}</option>
+            <option key={s} value={s}>{s.replace(/_/g, ' ') || 'All Statuses'}</option>
           ))}
         </select>
       </div>
 
       <DataTable
-        columns={columns as Parameters<typeof DataTable>[0]['columns']}
+        columns={columns as unknown as Parameters<typeof DataTable>[0]['columns']}
         data={enquiries as unknown as Record<string, unknown>[]}
         keyField="id" loading={loading}
         emptyMessage="No enquiries found"

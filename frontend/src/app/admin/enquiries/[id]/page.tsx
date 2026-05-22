@@ -20,7 +20,7 @@ interface EnquiryDetail {
   user?: { id: string; firstName: string; lastName: string; email: string };
 }
 
-const STATUSES = ['PENDING', 'REVIEWING', 'QUOTED', 'APPROVED', 'IN_PROGRESS', 'COMPLETED', 'CANCELLED'];
+const STATUSES = ['NEW', 'IN_REVIEW', 'QUOTED', 'CONFIRMED', 'COMPLETED'];
 
 export default function EnquiryDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -137,7 +137,7 @@ export default function EnquiryDetailPage() {
             <div>
               <label className="label-base mb-1.5">Status</label>
               <select value={status} onChange={(e) => setStatus(e.target.value)} className="input-base w-full h-9 text-sm">
-                {STATUSES.map((s) => <option key={s} value={s}>{s}</option>)}
+                {STATUSES.map((s) => <option key={s} value={s}>{s.replace(/_/g, ' ')}</option>)}
               </select>
             </div>
             <div>

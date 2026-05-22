@@ -25,7 +25,7 @@ export default function CategoryFormPage() {
   const router = useRouter();
   const params = useParams();
   const searchParams = useSearchParams();
-  const isNew = params.id === 'new';
+  const isNew = params.id === 'new' || !params.id;
   const categoryId = isNew ? null : params.id as string;
   const initialTab = searchParams.get('tab') === 'attributes' ? 'attributes' : 'details';
 

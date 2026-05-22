@@ -345,8 +345,8 @@ export default function Header() {
                   </span>
                 )}
               </Link>
-              <button onClick={() => setMobileOpen(!mobileOpen)} className="md:hidden"
-                style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'rgba(255,255,255,0.7)', display: 'flex' }}>
+              <button onClick={() => setMobileOpen(!mobileOpen)} className="md:hidden flex"
+                style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'rgba(255,255,255,0.7)' }}>
                 {mobileOpen ? <X size={20} /> : <Menu size={20} />}
               </button>
             </div>

@@ -8,11 +8,13 @@ interface ConfirmDialogProps {
   variant?: 'danger' | 'default';
   onConfirm: () => void;
   onCancel: () => void;
+  loading?: boolean;
 }
 
 export default function ConfirmDialog({
   open, title, message, confirmLabel = 'Confirm',
   variant = 'default', onConfirm, onCancel,
+  loading = false,
 }: ConfirmDialogProps) {
   if (!open) return null;
 
@@ -25,12 +27,13 @@ export default function ConfirmDialog({
           <button onClick={onCancel} className="btn-ghost">Cancel</button>
           <button
             onClick={onConfirm}
+            disabled={loading}
             className={variant === 'danger'
-              ? 'px-4 py-2 text-sm bg-danger text-white hover:bg-red-800 transition-colors'
-              : 'btn-gold'
+              ? 'px-4 py-2 text-sm bg-danger text-white hover:bg-red-800 transition-colors disabled:opacity-50'
+              : 'btn-gold disabled:opacity-50'
             }
           >
-            {confirmLabel}
+            {loading ? 'Processing…' : confirmLabel}
           </button>
         </div>
       </div>

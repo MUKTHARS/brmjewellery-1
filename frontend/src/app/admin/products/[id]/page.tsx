@@ -8,10 +8,9 @@ import { productApi } from '@/api/product.api';
 import { categoryApi } from '@/api/category.api';
 import PageHeader from '@/components/admin/PageHeader';
 import toast from 'react-hot-toast';
-import Image from 'next/image';
+import { resolveImageUrl } from '@/lib/resolveImageUrl';
 import { cn } from '@/lib/cn';
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
 
 interface AttributeField {
   name: string; label: string; fieldType: string;
@@ -307,7 +306,7 @@ export default function ProductFormPage() {
                 {images.map((img) => (
                   <div key={img.id} className="relative group border border-gray-100">
                     <div className="aspect-square relative overflow-hidden bg-cream">
-                      <Image src={`${API_BASE}${img.url}`} alt="" fill className="object-cover" sizes="80px" />
+                      <img src={resolveImageUrl(img.url)} alt="" className="w-full h-full object-cover" />
                     </div>
                     {img.isPrimary && (
                       <div className="absolute top-1 left-1 bg-gold text-white text-[9px] px-1">Primary</div>
@@ -333,7 +332,7 @@ export default function ProductFormPage() {
                 {newFiles.map((file, i) => (
                   <div key={i} className="relative border border-dashed border-gold/30">
                     <div className="aspect-square relative overflow-hidden bg-cream">
-                      <Image src={URL.createObjectURL(file)} alt="" fill className="object-cover" sizes="80px" />
+                      <img src={URL.createObjectURL(file)} alt="" className="w-full h-full object-cover" />
                     </div>
                     <button onClick={() => setNewFiles((prev) => prev.filter((_, j) => j !== i))}
                       className="absolute top-1 right-1 p-0.5 bg-white/90 text-danger">

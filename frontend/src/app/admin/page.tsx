@@ -162,8 +162,8 @@ export default function AdminDashboard() {
           <Link href="/admin/products/new" className="btn-gold text-xs py-2 px-5">Add Product</Link>
           <Link href="/admin/categories/new" className="btn-outline-gold text-xs py-2 px-5">Add Category</Link>
           <Link href="/admin/orders" className="btn-outline-gold text-xs py-2 px-5">View Orders</Link>
-          <Link href="/admin/enquiries" className="btn-outline-gold text-xs py-2 px-5">Bespoke Enquiries</Link>
-          <Link href="/admin/reports" className="btn-outline-gold text-xs py-2 px-5">Reports</Link>
+          {/* <Link href="/admin/enquiries" className="btn-outline-gold text-xs py-2 px-5">Bespoke Enquiries</Link> */}
+          {/* <Link href="/admin/reports" className="btn-outline-gold text-xs py-2 px-5">Reports</Link> */}
         </div>
       </div>
     </div>

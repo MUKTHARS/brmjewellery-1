@@ -16,7 +16,7 @@ export const uploadProductImages = (req: Request, res: Response, next: NextFunct
 
 export const uploadBespokeImages = (req: Request, res: Response, next: NextFunction): void => {
   req.uploadFolder = 'bespoke';
-  upload.array('referenceImages', 5)(req, res, (err) => {
+  upload.array('images', 5)(req, res, (err) => {
     if (err) {
       sendError(res, err.message, HTTP_STATUS.BAD_REQUEST);
       return;

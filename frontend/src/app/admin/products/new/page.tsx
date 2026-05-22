@@ -8,7 +8,6 @@ import { productApi } from '@/api/product.api';
 import { categoryApi } from '@/api/category.api';
 import PageHeader from '@/components/admin/PageHeader';
 import toast from 'react-hot-toast';
-import Image from 'next/image';
 import { cn } from '@/lib/cn';
 
 interface AttributeField {
@@ -219,7 +218,7 @@ export default function NewProductPage() {
                 {newFiles.map((file, i) => (
                   <div key={i} className="relative border border-dashed border-gold/30">
                     <div className="aspect-square relative overflow-hidden bg-cream">
-                      <Image src={URL.createObjectURL(file)} alt="" fill className="object-cover" sizes="80px" />
+                      <img src={URL.createObjectURL(file)} alt="" className="w-full h-full object-cover" />
                     </div>
                     <button onClick={() => setNewFiles((p) => p.filter((_, j) => j !== i))}
                       className="absolute top-1 right-1 p-0.5 bg-white/90 text-danger">

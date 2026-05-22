@@ -5,10 +5,13 @@ const ukPhoneRegex = /^(\+44|0)[1-9]\d{9}$/;
 export const createAppointmentSchema = z.object({
   name: z.string().min(1, 'Name is required').max(100),
   email: z.string().email('Invalid email address'),
-  phone: z.string().regex(ukPhoneRegex, 'Invalid UK phone number'),
-  appointmentType: z.enum(['Bespoke Consultation', 'Viewing', 'Collection']),
-  date: z.string().min(1, 'Date is required'),
-  notes: z.string().optional(),
+  phone: z.string()
+    .transform(val => val.replace(/[\s\-]/g, ''))
+    .refine(val => ukPhoneRegex.test(val), { message: 'Invalid UK phone number' }),
+  appointmentType: z.enum(['CONSULTATION', 'VIEWING', 'BESPOKE_DISCUSSION', 'RING_SIZING', 'COLLECTION']),
+  preferredDate: z.string().min(1, 'Preferred date is required'),
+  preferredTime: z.string().min(1, 'Preferred time is required'),
+  message: z.string().optional(),
 });
 
 export const updateAppointmentSchema = z.object({

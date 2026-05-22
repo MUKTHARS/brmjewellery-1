@@ -55,7 +55,7 @@ export const createOrder = async (userId: string, data: CreateOrderInput) => {
       items: { create: lineItems },
     },
     include: {
-      items: { include: { product: { select: { title: true, sku: true, images: { where: { isPrimary: true }, take: 1 } } } } },
+      items: { include: { product: { select: { title: true, sku: true, images: { take: 1, orderBy: { isPrimary: 'desc' } } } } } },
     },
   });
 };
@@ -69,7 +69,7 @@ export const getUserOrders = async (userId: string, pagination: PaginationOption
       take: pagination.limit,
       orderBy: { createdAt: 'desc' },
       include: {
-        items: { include: { product: { select: { title: true, images: { where: { isPrimary: true }, take: 1 } } } } },
+        items: { include: { product: { select: { title: true, images: { take: 1, orderBy: { isPrimary: 'desc' } } } } } },
         shipment: { select: { courier: true, trackingNumber: true, status: true } },
         invoice: { select: { id: true, invoiceNumber: true, pdfUrl: true } },
       },
@@ -82,7 +82,7 @@ export const getUserOrderById = async (id: string, userId: string) => {
   const order = await prisma.order.findFirst({
     where: { id, userId },
     include: {
-      items: { include: { product: { select: { title: true, sku: true, images: { where: { isPrimary: true }, take: 1 } } } } },
+      items: { include: { product: { select: { title: true, sku: true, images: { take: 1, orderBy: { isPrimary: 'desc' } } } } } },
       shipment: true,
       invoice: true,
     },
@@ -151,7 +151,7 @@ export const getOrderById = async (id: string) => {
     where: { id },
     include: {
       user: { select: { id: true, firstName: true, lastName: true, email: true, phone: true } },
-      items: { include: { product: { select: { title: true, sku: true, images: { where: { isPrimary: true }, take: 1 } } } } },
+      items: { include: { product: { select: { title: true, sku: true, images: { take: 1, orderBy: { isPrimary: 'desc' } } } } } },
       invoice: true,
       shipment: true,
     },

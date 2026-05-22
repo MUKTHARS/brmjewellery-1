@@ -11,7 +11,14 @@ export const createCategory = async (data: CreateCategoryInput) => {
   if (existing) throw new AppError(ERROR_MESSAGES.CATEGORY_SLUG_EXISTS, HTTP_STATUS.CONFLICT);
 
   return prisma.category.create({
-    data: { name: data.name, slug, description: data.description, parentId: data.parentId, isActive: data.isActive, sortOrder: data.sortOrder },
+    data: {
+      name: data.name,
+      slug,
+      description: data.description,
+      parentId: data.parentId || null,
+      isActive: data.isActive,
+      sortOrder: data.sortOrder
+    },
     include: { parent: true, children: true, _count: { select: { products: true } } },
   });
 };
@@ -57,7 +64,7 @@ export const updateCategory = async (id: string, data: Partial<CreateCategoryInp
       ...(data.name && { name: data.name }),
       ...(data.slug && { slug: data.slug }),
       ...(data.description !== undefined && { description: data.description }),
-      ...(data.parentId !== undefined && { parentId: data.parentId }),
+      ...(data.parentId !== undefined && { parentId: data.parentId || null }),
       ...(data.isActive !== undefined && { isActive: data.isActive }),
       ...(data.sortOrder !== undefined && { sortOrder: data.sortOrder }),
     },

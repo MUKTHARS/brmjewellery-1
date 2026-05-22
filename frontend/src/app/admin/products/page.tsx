@@ -14,17 +14,16 @@ import { formatGBP } from '@/lib/formatCurrency';
 import { formatUKDate } from '@/lib/formatDate';
 import toast from 'react-hot-toast';
 import Link from 'next/link';
-import Image from 'next/image';
+import { resolveImageUrl } from '@/lib/resolveImageUrl';
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
 
-interface Product {
+type Product = {
   id: string; title: string; slug: string; sku: string;
   baseCost: number; isActive: boolean; stockQty: number;
   metalType: string | null; carat: string | null;
   category: { name: string }; createdAt: string;
   images: Array<{ url: string; isPrimary: boolean }>;
-}
+};
 
 interface Category { id: string; name: string; }
 
@@ -75,8 +74,8 @@ export default function ProductsPage() {
       render: (row: Product) => {
         const img = row.images.find((i) => i.isPrimary) || row.images[0];
         return img ? (
-          <div className="w-10 h-10 bg-cream border border-gray-100 overflow-hidden relative">
-            <Image src={`${API_BASE}${img.url}`} alt={row.title} fill className="object-cover" sizes="40px" />
+          <div className="w-10 h-10 bg-cream border border-gray-100 overflow-hidden">
+            <img src={resolveImageUrl(img.url)} alt={row.title} className="w-full h-full object-cover" />
           </div>
         ) : <div className="w-10 h-10 bg-cream border border-gray-100" />;
       },
@@ -158,10 +157,10 @@ export default function ProductsPage() {
         </select>
       </div>
 
-      <DataTable
-        columns={columns} data={products as unknown as Record<string, unknown>[]}
+      <DataTable<Product>
+        columns={columns} data={products}
         keyField="id" loading={loading}
-        onRowClick={(row) => router.push(`/admin/products/${(row as unknown as Product).id}`)}
+        onRowClick={(row) => router.push(`/admin/products/${row.id}`)}
       />
 
       <div className="flex justify-between items-center mt-4">

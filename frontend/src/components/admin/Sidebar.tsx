@@ -18,10 +18,10 @@ const navItems = [
   { label: 'Customers', href: '/admin/customers', icon: Users },
   { label: 'Bespoke Enquiries', href: '/admin/enquiries', icon: Gem },
   { label: 'Appointments', href: '/admin/appointments', icon: Calendar },
-  { label: 'Reviews', href: '/admin/reviews', icon: Star },
-  { label: 'Newsletter', href: '/admin/newsletter', icon: Bell },
-  { label: 'Contact Messages', href: '/admin/contact', icon: Mail },
-  { label: 'Reports', href: '/admin/reports', icon: BarChart2 },
+  // { label: 'Reviews', href: '/admin/reviews', icon: Star },
+  // { label: 'Newsletter', href: '/admin/newsletter', icon: Bell },
+  // { label: 'Contact Messages', href: '/admin/contact', icon: Mail },
+  // { label: 'Reports', href: '/admin/reports', icon: BarChart2 },
 ];
 
 export default function Sidebar() {

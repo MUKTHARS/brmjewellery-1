@@ -137,7 +137,7 @@ export const getProducts = async (
       orderBy,
       include: {
         category: { select: { id: true, name: true, slug: true } },
-        images: { where: { isPrimary: true }, take: 1 },
+        images: { take: 1, orderBy: { isPrimary: 'desc' } },
         _count: { select: { reviews: true } },
       },
     }),

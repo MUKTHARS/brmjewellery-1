@@ -9,6 +9,7 @@ export const validate =
     const result = schema.safeParse(req[source]);
     if (!result.success) {
       const errors = (result.error as ZodError).flatten().fieldErrors;
+      console.log('Validation failed:', JSON.stringify(errors, null, 2));
       sendError(res, 'Validation failed', HTTP_STATUS.BAD_REQUEST, errors);
       return;
     }

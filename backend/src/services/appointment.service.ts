@@ -7,8 +7,36 @@ import { sendEmail, emailTemplates } from './email.service';
 import { formatUKDateTime } from '../utils/dateTime.utils';
 import type { CreateAppointmentInput, UpdateAppointmentInput } from '../validators/appointment.validator';
 
+export const getUTCFromLondonTime = (dateStr: string, timeStr: string): Date => {
+  const utcDate = new Date(`${dateStr}T${timeStr}:00Z`);
+  const formatter = new Intl.DateTimeFormat('en-US', {
+    timeZone: 'Europe/London',
+    year: 'numeric',
+    month: 'numeric',
+    day: 'numeric',
+    hour: 'numeric',
+    minute: 'numeric',
+    second: 'numeric',
+    hour12: false
+  });
+  const parts = formatter.formatToParts(utcDate);
+  const partVal = (type: string) => parseInt(parts.find(p => p.type === type)!.value, 10);
+  
+  const londonDateObj = Date.UTC(
+    partVal('year'),
+    partVal('month') - 1,
+    partVal('day'),
+    partVal('hour') === 24 ? 0 : partVal('hour'),
+    partVal('minute'),
+    partVal('second')
+  );
+  
+  const offsetMs = londonDateObj - utcDate.getTime();
+  return new Date(utcDate.getTime() - offsetMs);
+};
+
 export const createAppointment = async (data: CreateAppointmentInput, userId?: string) => {
-  const appointmentDate = new Date(data.date);
+  const appointmentDate = getUTCFromLondonTime(data.preferredDate, data.preferredTime);
 
   const appointment = await prisma.appointment.create({
     data: {
@@ -18,7 +46,7 @@ export const createAppointment = async (data: CreateAppointmentInput, userId?: s
       phone: data.phone,
       appointmentType: data.appointmentType,
       date: appointmentDate,
-      notes: data.notes,
+      notes: data.message || null,
     },
   });
 
@@ -37,15 +65,23 @@ export const createAppointment = async (data: CreateAppointmentInput, userId?: s
 
 export const getAppointments = async (
   pagination: PaginationOptions,
-  filters: { status?: string; from?: string; to?: string }
+  filters: { status?: string; from?: string; to?: string; search?: string; type?: string }
 ) => {
-  const where: Record<string, unknown> = {};
+  const where: Record<string, any> = {};
   if (filters.status) where.status = filters.status;
+  if (filters.type) where.appointmentType = filters.type;
   if (filters.from || filters.to) {
     where.date = {
       ...(filters.from ? { gte: new Date(filters.from) } : {}),
       ...(filters.to ? { lte: new Date(filters.to) } : {}),
     };
+  }
+  if (filters.search) {
+    where.OR = [
+      { name: { contains: filters.search, mode: 'insensitive' } },
+      { email: { contains: filters.search, mode: 'insensitive' } },
+      { phone: { contains: filters.search, mode: 'insensitive' } },
+    ];
   }
 
   const [total, appointments] = await Promise.all([

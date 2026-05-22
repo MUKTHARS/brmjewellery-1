@@ -35,7 +35,8 @@ export default function AppointmentsPage() {
     setLoading(true);
     try {
       const { data } = await appointmentApi.getAll({
-        page, limit: 25,
+        page: String(page),
+        limit: '25',
         search: search || undefined,
         status: statusFilter || undefined,
         type: typeFilter || undefined,
@@ -80,7 +81,7 @@ export default function AppointmentsPage() {
         <select
           value={row.status}
           onChange={(e) => handleStatusChange(row.id, e.target.value, e as unknown as React.MouseEvent)}
-          className="input-base h-7 text-xs w-32"
+          className="border border-gray-200 bg-white px-2 py-1 text-xs text-ink focus:border-gold focus:outline-none focus:ring-1 focus:ring-gold transition-colors w-32 rounded h-8"
           onClick={(e) => e.stopPropagation()}
         >
           {STATUS_OPTIONS.filter(Boolean).map((s) => <option key={s} value={s}>{s}</option>)}
@@ -112,7 +113,7 @@ export default function AppointmentsPage() {
       </div>
 
       <DataTable
-        columns={columns as Parameters<typeof DataTable>[0]['columns']}
+        columns={columns as unknown as Parameters<typeof DataTable>[0]['columns']}
         data={appointments as unknown as Record<string, unknown>[]}
         keyField="id" loading={loading}
         emptyMessage="No appointments found"
