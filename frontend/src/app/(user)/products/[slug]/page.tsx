@@ -2,13 +2,15 @@
 
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { Minus, Plus, ShoppingBag, ArrowLeft, CheckCircle2 } from 'lucide-react';
+import { Minus, Plus, ShoppingBag, ArrowLeft, CheckCircle2, Heart } from 'lucide-react';
 import { productApi } from '@/api/product.api';
 import { reviewApi } from '@/api/review.api';
 import ImageGallery from '@/components/user/ImageGallery';
 import StarRating from '@/components/user/StarRating';
 import ProductCard from '@/components/user/ProductCard';
 import { useCart } from '@/contexts/CartContext';
+import { useWishlist } from '@/contexts/WishlistContext';
+import { useAuth } from '@/contexts/AuthContext';
 import { formatGBP } from '@/lib/formatCurrency';
 import { formatUKDate } from '@/lib/formatDate';
 import toast from 'react-hot-toast';
@@ -30,6 +32,8 @@ export default function ProductDetailPage() {
   const { slug } = useParams<{ slug: string }>();
   const router = useRouter();
   const { addItem } = useCart();
+  const { isWishlisted, toggle } = useWishlist();
+  const { user } = useAuth();
 
   const [product, setProduct] = useState<Product | null>(null);
   const [reviews, setReviews] = useState<Review[]>([]);
@@ -176,10 +180,23 @@ export default function ProductDetailPage() {
                 <span className="text-xs text-ink-muted">Max {product.stockQty}</span>
               </div>
 
-              <button onClick={handleAddToCart} disabled={added}
-                className="w-full btn-gold py-3.5 flex items-center justify-center gap-2 text-sm uppercase tracking-widest disabled:opacity-70">
-                {added ? <><CheckCircle2 size={16} /> Added to Bag</> : <><ShoppingBag size={16} /> Add to Bag</>}
-              </button>
+              <div className="flex gap-3">
+                <button onClick={handleAddToCart} disabled={added}
+                  className="flex-1 btn-gold py-3.5 flex items-center justify-center gap-2 text-sm uppercase tracking-widest disabled:opacity-70">
+                  {added ? <><CheckCircle2 size={16} /> Added to Bag</> : <><ShoppingBag size={16} /> Add to Bag</>}
+                </button>
+                <button
+                  onClick={() => {
+                    if (!user) { router.push('/login?redirect=' + encodeURIComponent(`/products/${product.slug}`)); return; }
+                    toggle({ productId: product.id, slug: product.slug, title: product.title, price: Number(product.baseCost), imageUrl: sortedImages[0]?.url, metalType: product.metalType, carat: product.carat ?? undefined, category: product.category?.name });
+                    toast.success(isWishlisted(product.id) ? 'Removed from wishlist' : 'Added to wishlist');
+                  }}
+                  className="border border-gold/30 px-4 py-3.5 flex items-center justify-center hover:border-gold transition-colors"
+                  aria-label={isWishlisted(product.id) ? 'Remove from wishlist' : 'Save to wishlist'}
+                >
+                  <Heart size={18} style={{ fill: isWishlisted(product.id) ? '#C9A84C' : 'none', color: isWishlisted(product.id) ? '#C9A84C' : '#888', transition: 'all 0.2s' }} />
+                </button>
+              </div>
             </div>
           )}
 

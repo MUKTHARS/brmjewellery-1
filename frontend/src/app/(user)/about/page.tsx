@@ -147,14 +147,14 @@ export default function AboutPage() {
                 </li>
                 <li className="flex items-center gap-4">
                   <Mail size={18} className="text-gold flex-shrink-0" />
-                  <a href="mailto:hello@brmjewellery.co.uk" className="text-white/70 text-sm hover:text-gold transition-colors">hello@brmjewellery.co.uk</a>
+                  <a href="mailto:support@brmjewellery.co.uk" className="text-white/70 text-sm hover:text-gold transition-colors">support@brmjewellery.co.uk</a>
                 </li>
                 <li className="flex items-center gap-4">
                   <Clock size={18} className="text-gold flex-shrink-0" />
                   <div className="text-white/70 text-sm">
-                    <p>Monday – Friday: 10am – 6pm</p>
-                    <p>Saturday: 10am – 5pm</p>
-                    <p>Sunday: By appointment only</p>
+                    <p>Monday – Saturday: 10am – 6pm</p>
+                    {/* <p>Saturday: 10am – 5pm</p> */}
+                    <p>Sunday: Closed</p>
                   </div>
                 </li>
               </ul>

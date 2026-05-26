@@ -3,9 +3,10 @@
 import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
-import { ShoppingBag, Menu, X, User, ChevronDown } from 'lucide-react';
+import { ShoppingBag, Menu, X, User, ChevronDown, Heart, Search } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useCart } from '@/contexts/CartContext';
+import { useWishlist } from '@/contexts/WishlistContext';
 import { metalPriceApi } from '@/api/metalPrice.api';
 import { formatGBP } from '@/lib/formatCurrency';
 
@@ -26,7 +27,7 @@ const NAV_LINKS = [
   { href: '/bespoke', label: 'Bespoke', hasDropdown: false },
   { href: '/appointments', label: 'Appointments', hasDropdown: false },
   { href: '/about', label: 'About', hasDropdown: false },
-  { href: '/contact', label: 'Contact', hasDropdown: false },
+  { href: '/visit-us', label: 'Visit Us', hasDropdown: false },
 ];
 
 const METAL_SYMBOL: Record<string, string> = { GOLD: 'Au', SILVER: 'Ag', PLATINUM: 'Pt' };
@@ -40,6 +41,7 @@ export default function Header() {
   const searchParams = useSearchParams();
   const { user, logout } = useAuth();
   const { count } = useCart();
+  const { count: wishlistCount } = useWishlist();
 
   const [mobileOpen,      setMobileOpen]      = useState(false);
   const [accountOpen,     setAccountOpen]     = useState(false);
@@ -297,47 +299,70 @@ export default function Header() {
                   </div>
                 )}
 
-                {/* Account */}
-                {user ? (
-                  <div ref={accountRef} style={{ position: 'relative', marginRight: '16px' }}>
-                    <button onClick={() => setAccountOpen(!accountOpen)} style={{ display: 'flex', alignItems: 'center', gap: '5px', background: 'none', border: 'none', cursor: 'pointer', color: 'rgba(255,255,255,0.5)', fontSize: '9px', letterSpacing: '0.15em', textTransform: 'uppercase', transition: 'color 0.2s' }}
-                      onMouseEnter={e => (e.currentTarget.style.color = '#C9A84C')}
-                      onMouseLeave={e => (e.currentTarget.style.color = 'rgba(255,255,255,0.5)')}>
-                      <User size={13} />
-                      <span style={{ maxWidth: '70px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{user.firstName}</span>
-                      <ChevronDown size={10} style={{ transition: 'transform 0.2s', transform: accountOpen ? 'rotate(180deg)' : 'none' }} />
-                    </button>
-                    {accountOpen && (
-                      <div style={{ position: 'absolute', right: 0, top: 'calc(100% + 10px)', minWidth: '160px', backgroundColor: '#111', border: '1px solid rgba(201,168,76,0.15)', boxShadow: '0 8px 32px rgba(0,0,0,0.7)', zIndex: 60 }}>
-                        {[{ href: '/account', label: 'My Account' }, { href: '/account/orders', label: 'My Orders' }].map((item) => (
-                          <Link key={item.href} href={item.href} onClick={() => setAccountOpen(false)}
-                            style={{ display: 'block', padding: '10px 14px', fontSize: '9px', letterSpacing: '0.15em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.55)', textDecoration: 'none', borderBottom: '1px solid rgba(201,168,76,0.07)', transition: 'color 0.2s, background 0.2s' }}
-                            onMouseEnter={e => { (e.currentTarget as HTMLAnchorElement).style.color = '#C9A84C'; (e.currentTarget as HTMLAnchorElement).style.backgroundColor = 'rgba(201,168,76,0.05)'; }}
-                            onMouseLeave={e => { (e.currentTarget as HTMLAnchorElement).style.color = 'rgba(255,255,255,0.55)'; (e.currentTarget as HTMLAnchorElement).style.backgroundColor = 'transparent'; }}>
-                            {item.label}
-                          </Link>
-                        ))}
-                        <button onClick={() => { setAccountOpen(false); logout(); }}
-                          style={{ display: 'block', width: '100%', textAlign: 'left', padding: '10px 14px', background: 'none', border: 'none', cursor: 'pointer', fontSize: '9px', letterSpacing: '0.15em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.3)', transition: 'color 0.2s' }}
-                          onMouseEnter={e => (e.currentTarget.style.color = '#fff')}
-                          onMouseLeave={e => (e.currentTarget.style.color = 'rgba(255,255,255,0.3)')}>
-                          Sign Out
-                        </button>
-                      </div>
-                    )}
-                  </div>
-                ) : (
-                  <Link href="/login" style={{ display: 'flex', alignItems: 'center', gap: '5px', marginRight: '16px', fontSize: '9px', letterSpacing: '0.15em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.5)', textDecoration: 'none', transition: 'color 0.2s' }}
-                    onMouseEnter={e => (e.currentTarget as HTMLAnchorElement).style.color = '#C9A84C'}
-                    onMouseLeave={e => (e.currentTarget as HTMLAnchorElement).style.color = 'rgba(255,255,255,0.5)'}>
-                    <User size={13} /> Sign In
-                  </Link>
-                )}
               </div>
             </div>
 
-            {/* ── ALWAYS VISIBLE: single Cart + mobile-only hamburger ── */}
+            {/* ── ALWAYS VISIBLE: icons + Cart + mobile-only hamburger ── */}
             <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginLeft: 'auto' }}>
+
+              {/* Search */}
+              <Link href="/products" style={{ display: 'flex', flexShrink: 0 }}>
+                <Search size={18} style={{ color: 'rgba(255,255,255,0.7)', transition: 'color 0.2s' }}
+                  onMouseEnter={e => (e.currentTarget as SVGElement).style.color = '#C9A84C'}
+                  onMouseLeave={e => (e.currentTarget as SVGElement).style.color = 'rgba(255,255,255,0.7)'}
+                />
+              </Link>
+
+              {/* User / Account */}
+              {user ? (
+                <div ref={accountRef} style={{ position: 'relative', display: 'flex', flexShrink: 0 }}>
+                  <button onClick={() => setAccountOpen(!accountOpen)} style={{ display: 'flex', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>
+                    <User size={18} style={{ color: accountOpen ? '#C9A84C' : 'rgba(255,255,255,0.7)', transition: 'color 0.2s' }}
+                      onMouseEnter={e => (e.currentTarget as SVGElement).style.color = '#C9A84C'}
+                      onMouseLeave={e => (e.currentTarget as SVGElement).style.color = accountOpen ? '#C9A84C' : 'rgba(255,255,255,0.7)'}
+                    />
+                  </button>
+                  {accountOpen && (
+                    <div style={{ position: 'absolute', right: 0, top: 'calc(100% + 10px)', minWidth: '160px', backgroundColor: '#111', border: '1px solid rgba(201,168,76,0.15)', boxShadow: '0 8px 32px rgba(0,0,0,0.7)', zIndex: 60 }}>
+                      {[{ href: '/account', label: 'My Account' }, { href: '/account/orders', label: 'My Orders' }].map((item) => (
+                        <Link key={item.href} href={item.href} onClick={() => setAccountOpen(false)}
+                          style={{ display: 'block', padding: '10px 14px', fontSize: '9px', letterSpacing: '0.15em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.55)', textDecoration: 'none', borderBottom: '1px solid rgba(201,168,76,0.07)', transition: 'color 0.2s, background 0.2s' }}
+                          onMouseEnter={e => { (e.currentTarget as HTMLAnchorElement).style.color = '#C9A84C'; (e.currentTarget as HTMLAnchorElement).style.backgroundColor = 'rgba(201,168,76,0.05)'; }}
+                          onMouseLeave={e => { (e.currentTarget as HTMLAnchorElement).style.color = 'rgba(255,255,255,0.55)'; (e.currentTarget as HTMLAnchorElement).style.backgroundColor = 'transparent'; }}>
+                          {item.label}
+                        </Link>
+                      ))}
+                      <button onClick={() => { setAccountOpen(false); logout(); }}
+                        style={{ display: 'block', width: '100%', textAlign: 'left', padding: '10px 14px', background: 'none', border: 'none', cursor: 'pointer', fontSize: '9px', letterSpacing: '0.15em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.3)', transition: 'color 0.2s' }}
+                        onMouseEnter={e => (e.currentTarget.style.color = '#fff')}
+                        onMouseLeave={e => (e.currentTarget.style.color = 'rgba(255,255,255,0.3)')}>
+                        Sign Out
+                      </button>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <Link href="/login" style={{ display: 'flex', flexShrink: 0 }}>
+                  <User size={18} style={{ color: 'rgba(255,255,255,0.7)', transition: 'color 0.2s' }}
+                    onMouseEnter={e => (e.currentTarget as SVGElement).style.color = '#C9A84C'}
+                    onMouseLeave={e => (e.currentTarget as SVGElement).style.color = 'rgba(255,255,255,0.7)'}
+                  />
+                </Link>
+              )}
+
+              {/* Wishlist */}
+              <Link href="/wishlist" style={{ position: 'relative', display: 'flex', flexShrink: 0 }}>
+                <Heart size={18} style={{ color: 'rgba(255,255,255,0.7)', transition: 'color 0.2s' }}
+                  onMouseEnter={e => (e.currentTarget as SVGElement).style.color = '#C9A84C'}
+                  onMouseLeave={e => (e.currentTarget as SVGElement).style.color = 'rgba(255,255,255,0.7)'}
+                />
+                {wishlistCount > 0 && (
+                  <span style={{ position: 'absolute', top: '-5px', right: '-6px', width: '15px', height: '15px', backgroundColor: '#C9A84C', color: '#000', fontSize: '8px', fontWeight: 700, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    {wishlistCount > 9 ? '9+' : wishlistCount}
+                  </span>
+                )}
+              </Link>
+
               <Link href="/cart" style={{ position: 'relative', display: 'flex', flexShrink: 0 }}>
                 <ShoppingBag size={18} style={{ color: 'rgba(255,255,255,0.7)', transition: 'color 0.2s' }}
                   onMouseEnter={e => (e.currentTarget as SVGElement).style.color = '#C9A84C'}

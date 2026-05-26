@@ -2,75 +2,85 @@ import Link from 'next/link';
 
 export default function Footer() {
   return (
-    <footer className="bg-ink text-white/70 mt-20" style={{ borderTop: '4px solid #059669' }}>
+    <footer className="mt-20" style={{ borderTop: '4px solid #059669', backgroundColor: '#faf8f4', color: '#444' }}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-10">
           {/* Brand */}
           <div className="md:col-span-1">
             <div className="mb-4">
-              <p className="font-cormorant text-2xl font-light tracking-[0.3em] text-white">BRM</p>
-              <p className="text-[10px] tracking-[0.2em] uppercase text-white/40 mt-0.5">Jewellery</p>
+              <p className="font-cormorant text-2xl font-light tracking-[0.3em]" style={{ color: '#1a1a1a' }}>BRM</p>
+              <p className="text-[10px] tracking-[0.2em] uppercase mt-0.5" style={{ color: '#aaa' }}>Jewellery</p>
             </div>
-            <p className="text-xs leading-relaxed text-white/50">
+            <p className="text-xs leading-relaxed" style={{ color: '#777' }}>
               Handcrafted luxury jewellery from London. Each piece tells a story of timeless craftsmanship.
             </p>
           </div>
 
           {/* Collections */}
           <div>
-            <h4 className="text-xs uppercase tracking-widest text-white/40 mb-4">Collections</h4>
-            <ul className="space-y-2 text-sm">
+            <h4 className="text-xs uppercase tracking-widest mb-4" style={{ color: '#000000' }}>Collections</h4>
+            <ul className="space-y-2 text-sm" style={{ color: '#555' }}>
               {['Rings', 'Chains & Necklaces', 'Bracelets', 'Earrings', 'Pendants'].map((c) => (
                 <li key={c}><Link href={`/products?category=${c.toLowerCase()}`} className="hover:text-gold transition-colors">{c}</Link></li>
               ))}
             </ul>
           </div>
 
-          {/* Services */}
+          {/* Browse By Category */}
           <div>
-            <h4 className="text-xs uppercase tracking-widest text-white/40 mb-4">Services</h4>
-            <ul className="space-y-2 text-sm">
-              <li><Link href="/bespoke" className="hover:text-gold transition-colors">Bespoke Jewellery</Link></li>
-              <li><Link href="/appointments" className="hover:text-gold transition-colors">Book Appointment</Link></li>
-              <li><Link href="/account/orders" className="hover:text-gold transition-colors">Track Order</Link></li>
-              <li><Link href="/faq" className="hover:text-gold transition-colors">FAQ</Link></li>
-              <li><Link href="/about" className="hover:text-gold transition-colors">About Us</Link></li>
+            <h4 className="text-xs uppercase tracking-widest mb-4" style={{ color: '#000000' }}>Browse By Category</h4>
+            <ul className="space-y-2 text-sm" style={{ color: '#555' }}>
+              <li><Link href="/products?category=wedding-rings" className="hover:text-gold transition-colors">Wedding Rings</Link></li>
+              <li><Link href="/products?category=plain-wedding-rings" className="hover:text-gold transition-colors">Plain Wedding Rings</Link></li>
+              <li><Link href="/products?category=patterned-wedding-rings" className="hover:text-gold transition-colors">Patterned Wedding Rings</Link></li>
+              <li><Link href="/products?category=stone-set-wedding-rings" className="hover:text-gold transition-colors">Stone Set Wedding Rings</Link></li>
+              <li><Link href="/products?category=two-three-colour-wedding-rings" className="hover:text-gold transition-colors">Two &amp; Three Colour Metal Wedding Rings</Link></li>
+              <li><Link href="/products?category=engagement-rings" className="hover:text-gold transition-colors">Engagement Rings</Link></li>
+              <li><Link href="/products?category=eternity-rings" className="hover:text-gold transition-colors">Eternity Rings</Link></li>
+              <li><Link href="/products" className="hover:text-gold transition-colors">Jewellery</Link></li>
             </ul>
           </div>
 
-          
-          {/* Contact */}
+          {/* More Information */}
           <div>
-            <h4 className="text-xs uppercase tracking-widest text-white/40 mb-4">Contact</h4>
-            <ul className="space-y-2 text-xs text-white/50">
-              <li>Branch 1: 3 Selkirk Road, London, England, SW17 0ER</li>
-              <li>Branch 2: 1st Floor Suite 8A, 34-35 Hatton Garden, London EC1N 8DX</li>
-              <li><a href="mailto:hello@brmjewellery.co.uk" className="hover:text-gold transition-colors">hello@brmjewellery.co.uk</a></li>
-              <li><a href="tel:+442071234567" className="hover:text-gold transition-colors">+44 (0)20 7123 4567</a></li>
-              <li>Mon–Sat, 10am–6pm GMT</li>
-              <li className="pt-1"><Link href="/contact" className="hover:text-gold transition-colors">Send a message →</Link></li>
+            <h4 className="text-xs uppercase tracking-widest mb-4" style={{ color: '#000000' }}>More Information</h4>
+            <ul className="space-y-2 text-sm" style={{ color: '#555' }}>
+              <li><Link href="/delivery" className="hover:text-gold transition-colors">Delivery Information</Link></li>
+              <li><Link href="/contact" className="hover:text-gold transition-colors">Contact Us</Link></li>
+              <li><Link href="/about" className="hover:text-gold transition-colors">About Us</Link></li>
+              <li><Link href="/visit-us" className="hover:text-gold transition-colors">Visit Us</Link></li>
+              <li><Link href="/ring-builder" className="hover:text-gold transition-colors">Find Your Ring Size</Link></li>
+              <li><Link href="/free-ring-sizing" className="hover:text-gold transition-colors">Free Ring Sizing</Link></li>
+              <li><Link href="/matt-and-hammered-finishes" className="hover:text-gold transition-colors">Matt and Hammered Finishes</Link></li>
+              <li><Link href="/personalised-engraving" className="hover:text-gold transition-colors">Personalised Engraving</Link></li>
+              <li><Link href="/hallmarking" className="hover:text-gold transition-colors">Hallmarking</Link></li>
+              <li><Link href="/product-information" className="hover:text-gold transition-colors">Product Information</Link></li>
+              <li><Link href="/refund-policy" className="hover:text-gold transition-colors">Refunds and Exchanges</Link></li>
+              <li><Link href="/privacy" className="hover:text-gold transition-colors">Privacy Policy</Link></li>
+              <li><Link href="/terms" className="hover:text-gold transition-colors">Terms and Conditions</Link></li>
             </ul>
           </div>
+
         </div>
 
         {/* Hallmark & Payment Section */}
-        <div className="border-t border-white/10 py-10 flex flex-col md:flex-row justify-between items-center gap-10">
+        <div className="py-10 flex flex-col md:flex-row justify-between items-center gap-10" style={{ borderTop: '1px solid #e8e0d0' }}>
           <div className="flex-shrink-0">
-            <a 
-              href="https://www.assayofficelondon.co.uk/" 
-              target="_blank" 
+            <a
+              href="https://www.assayofficelondon.co.uk/"
+              target="_blank"
               rel="noopener noreferrer"
               className="block hover:scale-105 transition-transform duration-300"
             >
-              <img 
-                src="/assets/image.png" 
-                alt="Hallmark of The Goldsmiths' Company" 
+              <img
+                src="/assets/image.png"
+                alt="Hallmark of The Goldsmiths' Company"
                 className="h-24 w-auto object-contain opacity-90 hover:opacity-100 transition-opacity"
               />
             </a>
           </div>
 
-          <div className="bg-white px-6 py-4 rounded-xl flex flex-wrap justify-center items-center gap-6 shadow-md transition-all duration-500">
+          <div className="px-6 py-4 flex flex-wrap justify-center items-center gap-6" style={{ backgroundColor: '#faf8f4' }}>
             <svg viewBox="0 0 780 500" className="h-5 w-auto" aria-label="Visa">
               <rect width="780" height="500" rx="40" fill="#1A1F71"/>
               <path d="M293 348.5L326.5 153H377L343.5 348.5H293Z" fill="white"/>
@@ -110,12 +120,12 @@ export default function Footer() {
           </div>
         </div>
 
-        <div className="border-t border-white/10 pt-6 flex flex-col sm:flex-row justify-between items-center gap-3">
-          <p className="text-xs text-white/30">© {new Date().getFullYear()} BRM Jewellery Ltd. All rights reserved.</p>
-          <div className="flex gap-4 text-xs text-white/30">
-            <Link href="/privacy" className="hover:text-white/60 transition-colors">Privacy</Link>
-            <Link href="/terms" className="hover:text-white/60 transition-colors">Terms</Link>
-            <Link href="/contact" className="hover:text-white/60 transition-colors">Contact</Link>
+        <div className="pt-6 flex flex-col sm:flex-row justify-between items-center gap-3" style={{ borderTop: '1px solid #e8e0d0' }}>
+          <p className="text-xs" style={{ color: '#aaa' }}>© {new Date().getFullYear()} BRM Jewellery Ltd. All rights reserved.</p>
+          <div className="flex gap-4 text-xs" style={{ color: '#aaa' }}>
+            <Link href="/privacy" className="hover:text-gold transition-colors">Privacy</Link>
+            <Link href="/terms" className="hover:text-gold transition-colors">Terms</Link>
+            <Link href="/visit-us" className="hover:text-gold transition-colors">Visit Us</Link>
           </div>
         </div>
       </div>

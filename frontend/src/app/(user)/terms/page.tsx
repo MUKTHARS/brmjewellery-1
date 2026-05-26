@@ -19,7 +19,7 @@ export default function TermsPage() {
 
         <section>
           <h2 className="text-sm font-semibold uppercase tracking-wider text-ink mb-3">2. About Us</h2>
-          <p>BRM Jewellery Ltd is registered in England and Wales. Our address is 3 Selkirk Road, London, England, SW17 0ER. VAT registered. You can contact us at <a href="mailto:hello@brmjewellery.co.uk" className="text-gold hover:underline">hello@brmjewellery.co.uk</a>.</p>
+          <p>BRM Jewellery Ltd is registered in England and Wales. Our address is 3 Selkirk Road, London, England, SW17 0ER. VAT registered. You can contact us at <a href="mailto:support@brmjewellery.co.uk" className="text-gold hover:underline">support@brmjewellery.co.uk</a>.</p>
         </section>
 
         <section>
@@ -50,7 +50,7 @@ export default function TermsPage() {
           <h2 className="text-sm font-semibold uppercase tracking-wider text-ink mb-3">6. Returns & Cancellations</h2>
           <ul className="list-disc pl-5 space-y-2">
             <li>You have the right to cancel your order within 14 days of delivery under the Consumer Contracts Regulations 2013, provided the item is unworn and unaltered.</li>
-            <li>To cancel, contact us at <a href="mailto:hello@brmjewellery.co.uk" className="text-gold hover:underline">hello@brmjewellery.co.uk</a> within 14 days. Return postage is at your cost unless the item is faulty.</li>
+            <li>To cancel, contact us at <a href="mailto:support@brmjewellery.co.uk" className="text-gold hover:underline">support@brmjewellery.co.uk</a> within 14 days. Return postage is at your cost unless the item is faulty.</li>
             <li>Bespoke, engraved, and specially commissioned items are exempt from the right to cancel (as permitted by law).</li>
             <li>Refunds are issued within 14 days of receiving the returned goods in satisfactory condition.</li>
           </ul>
@@ -91,7 +91,7 @@ export default function TermsPage() {
         </section>
 
         <div className="border-t border-gold/10 pt-8">
-          <p className="text-xs">For questions about these terms, contact us at <a href="mailto:hello@brmjewellery.co.uk" className="text-gold hover:underline">hello@brmjewellery.co.uk</a> or see our <Link href="/privacy" className="text-gold hover:underline">Privacy Policy</Link>.</p>
+          <p className="text-xs">For questions about these terms, contact us at <a href="mailto:support@brmjewellery.co.uk" className="text-gold hover:underline">support@brmjewellery.co.uk</a> or see our <Link href="/privacy" className="text-gold hover:underline">Privacy Policy</Link>.</p>
         </div>
       </div>
     </div>

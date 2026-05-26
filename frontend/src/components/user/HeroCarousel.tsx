@@ -1,8 +1,8 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import Link from 'next/link';
-import { ArrowRight, ChevronLeft, ChevronRight } from 'lucide-react';
+import { ArrowRight, ChevronLeft, ChevronRight, Pause, Play } from 'lucide-react';
 
 /* ─────────────────────────────────────────────────────────────
    SLIDE 1 — Full-bleed, text bottom, billboard style
@@ -278,6 +278,8 @@ const SLIDE_COUNT = 3;
 export default function HeroCarousel() {
   const [current, setCurrent] = useState(0);
   const [transitioning, setTransitioning] = useState(false);
+  const [paused, setPaused] = useState(false);
+  const pausedRef = useRef(false);
 
   const goTo = useCallback((idx: number) => {
     if (transitioning) return;
@@ -291,9 +293,12 @@ export default function HeroCarousel() {
   const next = useCallback(() => goTo((current + 1) % SLIDE_COUNT), [current, goTo]);
   const prev = useCallback(() => goTo((current - 1 + SLIDE_COUNT) % SLIDE_COUNT), [current, goTo]);
 
-  // auto-advance every 6 s
+  // keep ref in sync so the interval can read latest paused state without re-registering
+  useEffect(() => { pausedRef.current = paused; }, [paused]);
+
+  // auto-advance every 6 s — skips when paused
   useEffect(() => {
-    const t = setInterval(next, 6000);
+    const t = setInterval(() => { if (!pausedRef.current) next(); }, 6000);
     return () => clearInterval(t);
   }, [next]);
 
@@ -325,10 +330,10 @@ export default function HeroCarousel() {
         <ChevronRight size={22} />
       </button>
 
-      {/* ── dot indicators ── */}
+      {/* ── dot indicators + pause/play ── */}
       <div style={{
         position: 'absolute', bottom: '28px', left: '50%', transform: 'translateX(-50%)',
-        display: 'flex', alignItems: 'center', gap: '10px', zIndex: 40,
+        display: 'flex', alignItems: 'center', gap: '14px', zIndex: 40,
       }}>
         {Array.from({ length: SLIDE_COUNT }).map((_, i) => (
           <button key={i} onClick={() => goTo(i)} aria-label={`Slide ${i + 1}`} style={{
@@ -338,6 +343,28 @@ export default function HeroCarousel() {
             transition: 'all 0.45s ease',
           }} />
         ))}
+        <button
+          onClick={() => setPaused((p) => !p)}
+          aria-label={paused ? 'Play' : 'Pause'}
+          style={{
+            width: '28px', height: '28px',
+            backgroundColor: 'rgba(0,0,0,0.45)',
+            border: '1px solid rgba(201,168,76,0.35)',
+            color: '#C9A84C', display: 'flex', alignItems: 'center', justifyContent: 'center',
+            cursor: 'pointer', borderRadius: '50%', flexShrink: 0,
+            transition: 'border-color 0.2s, background 0.2s',
+          }}
+          onMouseEnter={e => {
+            (e.currentTarget as HTMLButtonElement).style.borderColor = '#C9A84C';
+            (e.currentTarget as HTMLButtonElement).style.backgroundColor = 'rgba(201,168,76,0.12)';
+          }}
+          onMouseLeave={e => {
+            (e.currentTarget as HTMLButtonElement).style.borderColor = 'rgba(201,168,76,0.35)';
+            (e.currentTarget as HTMLButtonElement).style.backgroundColor = 'rgba(0,0,0,0.45)';
+          }}
+        >
+          {paused ? <Play size={11} fill="#C9A84C" /> : <Pause size={11} fill="#C9A84C" />}
+        </button>
       </div>
 
       {/* ── slide counter top-right ── */}

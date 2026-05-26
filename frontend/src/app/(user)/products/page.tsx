@@ -1,12 +1,14 @@
 'use client';
 
 import { Suspense, useEffect, useState, useCallback } from 'react';
-import { useSearchParams } from 'next/navigation';
-import { Search, X, ChevronDown, ChevronUp, SlidersHorizontal, ArrowRight, ShoppingBag } from 'lucide-react';
+import { useSearchParams, useRouter } from 'next/navigation';
+import { Search, X, ChevronDown, ChevronUp, SlidersHorizontal, ArrowRight, ShoppingBag, Heart } from 'lucide-react';
 import Link from 'next/link';
 import { productApi } from '@/api/product.api';
 import { categoryApi } from '@/api/category.api';
 import { useCart } from '@/contexts/CartContext';
+import { useWishlist } from '@/contexts/WishlistContext';
+import { useAuth } from '@/contexts/AuthContext';
 import toast from 'react-hot-toast';
 import { formatGBP } from '@/lib/formatCurrency';
 import { resolveImageUrl } from '@/lib/resolveImageUrl';
@@ -147,6 +149,18 @@ function Chip({ label, onRemove }: { label: string; onRemove: () => void }) {
 function ProductCardLuxury({ product: p, onAddToCart }: { product: Product; onAddToCart: () => void }) {
   const [hovered, setHovered] = useState(false);
   const imageUrl = p.images?.[0]?.url ? resolveImageUrl(p.images[0].url) : null;
+  const { isWishlisted, toggle } = useWishlist();
+  const { user } = useAuth();
+  const router = useRouter();
+  const wishlisted = isWishlisted(p.id);
+
+  function handleWishlist(e: React.MouseEvent) {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!user) { router.push('/login?redirect=/wishlist'); return; }
+    toggle({ productId: p.id, slug: p.slug, title: p.title, price: Number(p.baseCost), imageUrl: p.images?.[0]?.url, metalType: p.metalType ?? undefined, carat: p.carat ?? undefined, category: p.category?.name });
+    toast.success(wishlisted ? 'Removed from wishlist' : 'Added to wishlist');
+  }
 
   return (
     <div onMouseEnter={() => setHovered(true)} onMouseLeave={() => setHovered(false)} style={{ display: 'flex', flexDirection: 'column' }}>
@@ -208,6 +222,22 @@ function ProductCardLuxury({ product: p, onAddToCart }: { product: Product; onAd
             {p.category.name}
           </div>
         )}
+
+        {/* Wishlist button */}
+        <button
+          onClick={handleWishlist}
+          style={{
+            position: 'absolute', top: '10px', right: '10px',
+            backgroundColor: 'rgba(255,255,255,0.88)', border: 'none', cursor: 'pointer',
+            width: '30px', height: '30px', display: 'flex', alignItems: 'center', justifyContent: 'center',
+            transition: 'background 0.2s',
+          }}
+          onMouseEnter={e => (e.currentTarget.style.backgroundColor = '#fff')}
+          onMouseLeave={e => (e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.88)')}
+          aria-label={wishlisted ? 'Remove from wishlist' : 'Add to wishlist'}
+        >
+          <Heart size={14} style={{ fill: wishlisted ? '#C9A84C' : 'none', color: wishlisted ? '#C9A84C' : '#555', transition: 'all 0.2s' }} />
+        </button>
       </div>
 
       {/* Info */}

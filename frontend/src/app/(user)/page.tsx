@@ -296,8 +296,8 @@ export default async function HomePage() {
                   </a>
                 </p>
                 <p>
-                  <a href="mailto:hello@brmjewellery.co.uk" className="text-white/50 no-underline hover:text-[#C9A84C] transition-colors">
-                    hello@brmjewellery.co.uk
+                  <a href="mailto:support@brmjewellery.co.uk" className="text-white/50 no-underline hover:text-[#C9A84C] transition-colors">
+                    support@brmjewellery.co.uk
                   </a>
                 </p>
                 <p style={{ marginTop: '16px', fontSize: '11px', color: 'rgba(255,255,255,0.3)' }}>

@@ -80,7 +80,7 @@ export default function ContactPage() {
                   <Mail size={18} className="text-gold flex-shrink-0 mt-0.5" />
                   <div>
                     <p className="text-sm font-medium text-ink">Email</p>
-                    <a href="mailto:hello@brmjewellery.co.uk" className="text-sm text-ink-muted hover:text-gold transition-colors">hello@brmjewellery.co.uk</a>
+                    <a href="mailto:support@brmjewellery.co.uk" className="text-sm text-ink-muted hover:text-gold transition-colors">support@brmjewellery.co.uk</a>
                   </div>
                 </li>
                 <li className="flex gap-4">
@@ -88,9 +88,9 @@ export default function ContactPage() {
                   <div>
                     <p className="text-sm font-medium text-ink">Opening Hours</p>
                     <p className="text-sm text-ink-muted mt-0.5">
-                      Mon – Fri: 10am – 6pm<br />
-                      Saturday: 10am – 5pm<br />
-                      Sunday: By appointment
+                      Mon – Sat: 10am – 6pm<br />
+                      {/* Saturday: 10am – 5pm<br /> */}
+                      Sunday: Closed
                     </p>
                   </div>
                 </li>

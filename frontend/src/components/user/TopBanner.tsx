@@ -4,7 +4,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 
 const SLIDES = [
-  'T: +44 (0) 20 7123 4567   |   E: hello@brmjewellery.co.uk',
+  'T: +44 (0) 20 7123 4567   |   E: support@brmjewellery.co.uk',
   'Finance Available',
   'Free Engraving & Matt Finish On All Wedding Rings',
 ];
