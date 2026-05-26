@@ -157,7 +157,7 @@ export default function Header() {
       {/* ── MAIN NAV ── */}
       <div style={{ backgroundColor: '#0a0a0a', borderBottom: '1px solid rgba(201,168,76,0.12)' }}>
         <div style={{ maxWidth: '1280px', margin: '0 auto', padding: '0 24px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', height: '60px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', height: '76px' }}>
 
             {/* Logo */}
             <Link href="/" style={{ textDecoration: 'none', display: 'flex', flexDirection: 'column', alignItems: 'center', marginRight: '32px', flexShrink: 0 }}>
@@ -185,26 +185,29 @@ export default function Header() {
                         {/* Trigger */}
                         <Link href={link.href} style={{
                           display: 'inline-flex', alignItems: 'center', gap: '4px',
-                          fontSize: '9px', letterSpacing: '0.2em', textTransform: 'uppercase',
+                          fontSize: '12px', letterSpacing: '0.2em', textTransform: 'uppercase',
                           textDecoration: 'none',
-                          color: active || collectionsOpen ? '#C9A84C' : 'rgba(255,255,255,0.5)',
+                          color: active || collectionsOpen ? '#C9A84C' : 'rgba(255,255,255,0.85)',
                           borderBottom: active ? '1px solid #C9A84C' : '1px solid transparent',
                           paddingBottom: '2px', transition: 'color 0.2s', whiteSpace: 'nowrap',
                         }}>
                           {link.label}
-                          <ChevronDown size={9} style={{ transition: 'transform 0.2s', transform: collectionsOpen ? 'rotate(180deg)' : 'none' }} />
+                          <ChevronDown size={12} style={{ transition: 'transform 0.2s', transform: collectionsOpen ? 'rotate(180deg)' : 'none' }} />
                         </Link>
 
                         {/* Dropdown panel */}
                         {collectionsOpen && categories.length > 0 && (
                           <div style={{
-                            position: 'absolute', top: 'calc(100% + 16px)', left: '50%',
+                            position: 'absolute', top: '100%', left: '50%',
                             transform: 'translateX(-50%)',
+                            paddingTop: '16px',
+                            zIndex: 60,
+                          }}>
+                          <div style={{
                             backgroundColor: '#111',
                             border: '1px solid rgba(201,168,76,0.15)',
                             boxShadow: '0 12px 40px rgba(0,0,0,0.8)',
                             minWidth: '200px',
-                            zIndex: 60,
                           }}>
                             {/* Header row */}
                             <div style={{ padding: '10px 16px', borderBottom: '1px solid rgba(201,168,76,0.1)' }}>
@@ -253,6 +256,7 @@ export default function Header() {
                               View All Collections →
                             </Link>
                           </div>
+                          </div>
                         )}
                       </div>
                     );
@@ -260,14 +264,14 @@ export default function Header() {
 
                   return (
                     <Link key={link.href} href={link.href} style={{
-                      fontSize: '9px', letterSpacing: '0.2em', textTransform: 'uppercase',
+                      fontSize: '12px', letterSpacing: '0.2em', textTransform: 'uppercase',
                       textDecoration: 'none',
-                      color: active ? '#C9A84C' : 'rgba(255,255,255,0.5)',
+                      color: active ? '#C9A84C' : 'rgba(255,255,255,0.85)',
                       borderBottom: active ? '1px solid #C9A84C' : '1px solid transparent',
                       paddingBottom: '2px', transition: 'color 0.2s', whiteSpace: 'nowrap',
                     }}
-                    onMouseEnter={e => { if (!active) (e.currentTarget as HTMLAnchorElement).style.color = '#fff'; }}
-                    onMouseLeave={e => { if (!active) (e.currentTarget as HTMLAnchorElement).style.color = 'rgba(255,255,255,0.5)'; }}
+                    onMouseEnter={e => { if (!active) (e.currentTarget as HTMLAnchorElement).style.color = '#C9A84C'; }}
+                    onMouseLeave={e => { if (!active) (e.currentTarget as HTMLAnchorElement).style.color = 'rgba(255,255,255,0.85)'; }}
                     >
                       {link.label}
                     </Link>
@@ -354,237 +358,6 @@ export default function Header() {
           </div>
         </div>
       </div>
-
-      {/* ── ADVANCED FILTER BAR (products page only) ── */}
-      {isProductsPage && (
-        <div
-          ref={filterBarRef}
-          style={{
-            backgroundColor: '#111',
-            borderBottom: '1px solid rgba(201,168,76,0.12)',
-            position: 'relative',
-            zIndex: 40,
-          }}
-        >
-          <div style={{ maxWidth: '1280px', margin: '0 auto', padding: '0 24px', display: 'flex', alignItems: 'center', gap: '0' }}>
-
-            {/* Label */}
-            <span className="hidden md:inline-block" style={{ fontSize: '7px', letterSpacing: '0.3em', textTransform: 'uppercase', color: 'rgba(201,168,76,0.4)', paddingRight: '20px', borderRight: '1px solid rgba(201,168,76,0.1)', marginRight: '4px', whiteSpace: 'nowrap' }}>
-              Filter by
-            </span>
-
-            {/* ── GEMSTONES ── */}
-            <div style={{ position: 'relative' }}>
-              <button
-                onClick={() => setActiveFilterPanel(activeFilterPanel === 'gemstone' ? null : 'gemstone')}
-                style={{
-                  display: 'flex', alignItems: 'center', gap: '5px',
-                  padding: '12px 18px',
-                  background: 'none', border: 'none', cursor: 'pointer',
-                  fontSize: '9px', letterSpacing: '0.2em', textTransform: 'uppercase',
-                  color: activeGemstone || activeFilterPanel === 'gemstone' ? '#C9A84C' : 'rgba(255,255,255,0.45)',
-                  borderBottom: activeGemstone ? '2px solid #C9A84C' : '2px solid transparent',
-                  transition: 'color 0.2s',
-                }}
-                onMouseEnter={e => { if (!activeGemstone) (e.currentTarget as HTMLButtonElement).style.color = '#fff'; }}
-                onMouseLeave={e => { if (!activeGemstone) (e.currentTarget as HTMLButtonElement).style.color = activeFilterPanel === 'gemstone' ? '#C9A84C' : 'rgba(255,255,255,0.45)'; }}
-              >
-                {activeGemstone || 'Gemstones'}
-                <ChevronDown size={9} style={{ transition: 'transform 0.2s', transform: activeFilterPanel === 'gemstone' ? 'rotate(180deg)' : 'none' }} />
-              </button>
-
-              {activeFilterPanel === 'gemstone' && (
-                <div style={{
-                  position: 'absolute', top: '100%', left: 0,
-                  backgroundColor: '#111', border: '1px solid rgba(201,168,76,0.18)',
-                  boxShadow: '0 16px 40px rgba(0,0,0,0.85)',
-                  minWidth: '200px', zIndex: 60, padding: '8px 0',
-                }}>
-                  <div style={{ padding: '8px 16px 6px', borderBottom: '1px solid rgba(201,168,76,0.08)' }}>
-                    <span style={{ fontSize: '7px', letterSpacing: '0.3em', textTransform: 'uppercase', color: 'rgba(201,168,76,0.45)' }}>Select Gemstone</span>
-                  </div>
-                  {FILTER_GEMSTONES.map(g => (
-                    <button
-                      key={g}
-                      onClick={() => applyFilter('gemstone', g)}
-                      style={{
-                        display: 'flex', alignItems: 'center', gap: '10px',
-                        width: '100%', padding: '9px 16px',
-                        background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left',
-                        fontSize: '10px', letterSpacing: '0.12em', textTransform: 'uppercase',
-                        color: activeGemstone === g ? '#C9A84C' : 'rgba(255,255,255,0.55)',
-                        backgroundColor: activeGemstone === g ? 'rgba(201,168,76,0.06)' : 'transparent',
-                        transition: 'color 0.15s, background 0.15s',
-                      }}
-                      onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.color = '#C9A84C'; (e.currentTarget as HTMLButtonElement).style.backgroundColor = 'rgba(201,168,76,0.05)'; }}
-                      onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.color = activeGemstone === g ? '#C9A84C' : 'rgba(255,255,255,0.55)'; (e.currentTarget as HTMLButtonElement).style.backgroundColor = activeGemstone === g ? 'rgba(201,168,76,0.06)' : 'transparent'; }}
-                    >
-                      <span style={{
-                        width: '12px', height: '12px', flexShrink: 0,
-                        border: `1px solid ${activeGemstone === g ? '#C9A84C' : 'rgba(255,255,255,0.2)'}`,
-                        backgroundColor: activeGemstone === g ? '#C9A84C' : 'transparent',
-                        display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      }}>
-                        {activeGemstone === g && <span style={{ width: '5px', height: '5px', backgroundColor: '#fff' }} />}
-                      </span>
-                      {g}
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
-
-            <div style={{ width: '1px', height: '20px', backgroundColor: 'rgba(201,168,76,0.1)' }} />
-
-            {/* ── DIAMOND SHAPE ── */}
-            <div style={{ position: 'relative' }}>
-              <button
-                onClick={() => setActiveFilterPanel(activeFilterPanel === 'diamondShape' ? null : 'diamondShape')}
-                style={{
-                  display: 'flex', alignItems: 'center', gap: '5px',
-                  padding: '12px 18px',
-                  background: 'none', border: 'none', cursor: 'pointer',
-                  fontSize: '9px', letterSpacing: '0.2em', textTransform: 'uppercase',
-                  color: activeDiamondShape || activeFilterPanel === 'diamondShape' ? '#C9A84C' : 'rgba(255,255,255,0.45)',
-                  borderBottom: activeDiamondShape ? '2px solid #C9A84C' : '2px solid transparent',
-                  transition: 'color 0.2s',
-                }}
-                onMouseEnter={e => { if (!activeDiamondShape) (e.currentTarget as HTMLButtonElement).style.color = '#fff'; }}
-                onMouseLeave={e => { if (!activeDiamondShape) (e.currentTarget as HTMLButtonElement).style.color = activeFilterPanel === 'diamondShape' ? '#C9A84C' : 'rgba(255,255,255,0.45)'; }}
-              >
-                {activeDiamondShape || 'Diamond Shape'}
-                <ChevronDown size={9} style={{ transition: 'transform 0.2s', transform: activeFilterPanel === 'diamondShape' ? 'rotate(180deg)' : 'none' }} />
-              </button>
-
-              {activeFilterPanel === 'diamondShape' && (
-                <div style={{
-                  position: 'absolute', top: '100%', left: 0,
-                  backgroundColor: '#111', border: '1px solid rgba(201,168,76,0.18)',
-                  boxShadow: '0 16px 40px rgba(0,0,0,0.85)',
-                  minWidth: '200px', zIndex: 60, padding: '8px 0',
-                }}>
-                  <div style={{ padding: '8px 16px 6px', borderBottom: '1px solid rgba(201,168,76,0.08)' }}>
-                    <span style={{ fontSize: '7px', letterSpacing: '0.3em', textTransform: 'uppercase', color: 'rgba(201,168,76,0.45)' }}>Select Shape</span>
-                  </div>
-                  {FILTER_DIAMOND_SHAPES.map(s => (
-                    <button
-                      key={s}
-                      onClick={() => applyFilter('diamondShape', s)}
-                      style={{
-                        display: 'flex', alignItems: 'center', gap: '10px',
-                        width: '100%', padding: '9px 16px',
-                        background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left',
-                        fontSize: '10px', letterSpacing: '0.12em', textTransform: 'uppercase',
-                        color: activeDiamondShape === s ? '#C9A84C' : 'rgba(255,255,255,0.55)',
-                        backgroundColor: activeDiamondShape === s ? 'rgba(201,168,76,0.06)' : 'transparent',
-                        transition: 'color 0.15s, background 0.15s',
-                      }}
-                      onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.color = '#C9A84C'; (e.currentTarget as HTMLButtonElement).style.backgroundColor = 'rgba(201,168,76,0.05)'; }}
-                      onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.color = activeDiamondShape === s ? '#C9A84C' : 'rgba(255,255,255,0.55)'; (e.currentTarget as HTMLButtonElement).style.backgroundColor = activeDiamondShape === s ? 'rgba(201,168,76,0.06)' : 'transparent'; }}
-                    >
-                      <span style={{
-                        width: '12px', height: '12px', flexShrink: 0,
-                        border: `1px solid ${activeDiamondShape === s ? '#C9A84C' : 'rgba(255,255,255,0.2)'}`,
-                        backgroundColor: activeDiamondShape === s ? '#C9A84C' : 'transparent',
-                        display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      }}>
-                        {activeDiamondShape === s && <span style={{ width: '5px', height: '5px', backgroundColor: '#fff' }} />}
-                      </span>
-                      {s}
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
-
-            <div style={{ width: '1px', height: '20px', backgroundColor: 'rgba(201,168,76,0.1)' }} />
-
-            {/* ── METALS ── */}
-            <div style={{ position: 'relative' }}>
-              <button
-                onClick={() => setActiveFilterPanel(activeFilterPanel === 'metalType' ? null : 'metalType')}
-                style={{
-                  display: 'flex', alignItems: 'center', gap: '5px',
-                  padding: '12px 18px',
-                  background: 'none', border: 'none', cursor: 'pointer',
-                  fontSize: '9px', letterSpacing: '0.2em', textTransform: 'uppercase',
-                  color: activeMetalType || activeFilterPanel === 'metalType' ? '#C9A84C' : 'rgba(255,255,255,0.45)',
-                  borderBottom: activeMetalType ? '2px solid #C9A84C' : '2px solid transparent',
-                  transition: 'color 0.2s',
-                }}
-                onMouseEnter={e => { if (!activeMetalType) (e.currentTarget as HTMLButtonElement).style.color = '#fff'; }}
-                onMouseLeave={e => { if (!activeMetalType) (e.currentTarget as HTMLButtonElement).style.color = activeFilterPanel === 'metalType' ? '#C9A84C' : 'rgba(255,255,255,0.45)'; }}
-              >
-                {activeMetalType || 'Metals'}
-                <ChevronDown size={9} style={{ transition: 'transform 0.2s', transform: activeFilterPanel === 'metalType' ? 'rotate(180deg)' : 'none' }} />
-              </button>
-
-              {activeFilterPanel === 'metalType' && (
-                <div style={{
-                  position: 'absolute', top: '100%', left: 0,
-                  backgroundColor: '#111', border: '1px solid rgba(201,168,76,0.18)',
-                  boxShadow: '0 16px 40px rgba(0,0,0,0.85)',
-                  minWidth: '220px', zIndex: 60, padding: '8px 0',
-                }}>
-                  <div style={{ padding: '8px 16px 6px', borderBottom: '1px solid rgba(201,168,76,0.08)' }}>
-                    <span style={{ fontSize: '7px', letterSpacing: '0.3em', textTransform: 'uppercase', color: 'rgba(201,168,76,0.45)' }}>Select Metal</span>
-                  </div>
-                  {FILTER_METALS.map(m => (
-                    <button
-                      key={m}
-                      onClick={() => applyFilter('metalType', m)}
-                      style={{
-                        display: 'flex', alignItems: 'center', gap: '10px',
-                        width: '100%', padding: '9px 16px',
-                        background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left',
-                        fontSize: '10px', letterSpacing: '0.12em', textTransform: 'uppercase',
-                        color: activeMetalType === m ? '#C9A84C' : 'rgba(255,255,255,0.55)',
-                        backgroundColor: activeMetalType === m ? 'rgba(201,168,76,0.06)' : 'transparent',
-                        transition: 'color 0.15s, background 0.15s',
-                      }}
-                      onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.color = '#C9A84C'; (e.currentTarget as HTMLButtonElement).style.backgroundColor = 'rgba(201,168,76,0.05)'; }}
-                      onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.color = activeMetalType === m ? '#C9A84C' : 'rgba(255,255,255,0.55)'; (e.currentTarget as HTMLButtonElement).style.backgroundColor = activeMetalType === m ? 'rgba(201,168,76,0.06)' : 'transparent'; }}
-                    >
-                      <span style={{
-                        width: '16px', height: '16px', flexShrink: 0,
-                        borderRadius: '50%',
-                        backgroundColor: METAL_SWATCHES[m] ?? '#ccc',
-                        border: `2px solid ${activeMetalType === m ? '#C9A84C' : 'rgba(255,255,255,0.15)'}`,
-                        boxShadow: activeMetalType === m ? '0 0 0 2px rgba(201,168,76,0.3)' : 'none',
-                        transition: 'border-color 0.2s',
-                      }} />
-                      {m}
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
-
-            {/* Clear filters */}
-            {hasAdvancedFilters && (
-              <>
-                <div style={{ width: '1px', height: '20px', backgroundColor: 'rgba(201,168,76,0.1)', marginLeft: 'auto' }} />
-                <button
-                  onClick={clearAdvancedFilters}
-                  style={{
-                    display: 'flex', alignItems: 'center', gap: '5px',
-                    padding: '12px 16px',
-                    background: 'none', border: 'none', cursor: 'pointer',
-                    fontSize: '8px', letterSpacing: '0.2em', textTransform: 'uppercase',
-                    color: 'rgba(201,168,76,0.6)',
-                    transition: 'color 0.2s',
-                  }}
-                  onMouseEnter={e => (e.currentTarget.style.color = '#C9A84C')}
-                  onMouseLeave={e => (e.currentTarget.style.color = 'rgba(201,168,76,0.6)')}
-                >
-                  <X size={9} /> Clear
-                </button>
-              </>
-            )}
-
-          </div>
-        </div>
-      )}
 
       {/* ── MOBILE MENU ── */}
       {mobileOpen && (

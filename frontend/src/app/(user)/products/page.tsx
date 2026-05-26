@@ -85,7 +85,7 @@ function FilterSection({
         <span style={{ fontSize: '10px', letterSpacing: '0.2em', textTransform: 'uppercase', fontWeight: 600, color: '#1A1A1A' }}>
           {title}
         </span>
-        {open ? <ChevronUp size={13} color="#6B6B6B" /> : <ChevronDown size={13} color="#6B6B6B" />}
+        {open ? <ChevronUp size={13} color="#444444" /> : <ChevronDown size={13} color="#444444" />}
       </button>
       {open && <div>{children}</div>}
     </div>
@@ -123,7 +123,7 @@ function CheckItem({
             }} />
           )}
         </span>
-        <span style={{ fontSize: '13px', color: active ? '#C9A84C' : '#6B6B6B' }}>{label}</span>
+        <span style={{ fontSize: '13px', color: active ? '#C9A84C' : '#444444' }}>{label}</span>
       </button>
     </li>
   );
@@ -203,7 +203,7 @@ function ProductCardLuxury({ product: p, onAddToCart }: { product: Product; onAd
             position: 'absolute', top: '10px', left: '10px',
             backgroundColor: 'rgba(255,255,255,0.92)',
             padding: '3px 8px', fontSize: '8px', letterSpacing: '0.15em',
-            textTransform: 'uppercase', color: '#6B6B6B',
+            textTransform: 'uppercase', color: '#444444',
           }}>
             {p.category.name}
           </div>
@@ -225,7 +225,7 @@ function ProductCardLuxury({ product: p, onAddToCart }: { product: Product; onAd
         </Link>
 
         {(p.metalType || p.carat || p.brand) && (
-          <p style={{ fontSize: '11px', color: '#9B9B9B', letterSpacing: '0.05em' }}>
+          <p style={{ fontSize: '11px', color: '#555555', letterSpacing: '0.05em' }}>
             {[p.brand, p.metalType, p.carat].filter(Boolean).join(' · ')}
           </p>
         )}
@@ -353,19 +353,21 @@ function ProductsPage() {
       </div>
 
       {/* Search */}
-      <div style={{ position: 'relative', marginBottom: '24px', borderBottom: '1px solid rgba(0,0,0,0.08)', paddingBottom: '20px' }}>
-        <Search size={13} style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', color: '#9B9B9B', pointerEvents: 'none' }} />
-        <input
-          type="text"
-          placeholder="Search pieces…"
-          value={search}
-          onChange={(e) => { setSearch(e.target.value); setPage(1); }}
-          style={{
-            width: '100%', padding: '8px 10px 8px 30px',
-            border: '1px solid #e5e5e5', fontSize: '12px', color: '#1A1A1A',
-            outline: 'none', boxSizing: 'border-box', backgroundColor: '#fafafa',
-          }}
-        />
+      <div style={{ marginBottom: '24px', borderBottom: '1px solid rgba(0,0,0,0.08)', paddingBottom: '20px' }}>
+        <div style={{ position: 'relative' }}>
+          <Search size={13} style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', color: '#555555', pointerEvents: 'none' }} />
+          <input
+            type="text"
+            placeholder="Search pieces…"
+            value={search}
+            onChange={(e) => { setSearch(e.target.value); setPage(1); }}
+            style={{
+              width: '100%', padding: '8px 10px 8px 30px',
+              border: '1px solid #e5e5e5', fontSize: '12px', color: '#1A1A1A',
+              outline: 'none', boxSizing: 'border-box', backgroundColor: '#fafafa',
+            }}
+          />
+        </div>
       </div>
 
       <FilterSection title="Category">
@@ -408,7 +410,7 @@ function ProductsPage() {
                   boxShadow: metalType === m ? '0 0 0 2px rgba(201,168,76,0.3)' : 'none',
                   transition: 'border-color 0.2s, box-shadow 0.2s',
                 }} />
-                <span style={{ fontSize: '13px', color: metalType === m ? '#C9A84C' : '#6B6B6B' }}>{m}</span>
+                <span style={{ fontSize: '13px', color: metalType === m ? '#C9A84C' : '#444444' }}>{m}</span>
               </button>
             </li>
           ))}
@@ -433,7 +435,7 @@ function ProductsPage() {
 
       <FilterSection title="Brand / Maker" defaultOpen={false}>
         <div style={{ position: 'relative' }}>
-          <Search size={12} style={{ position: 'absolute', left: '8px', top: '50%', transform: 'translateY(-50%)', color: '#9B9B9B', pointerEvents: 'none' }} />
+          <Search size={12} style={{ position: 'absolute', left: '8px', top: '50%', transform: 'translateY(-50%)', color: '#555555', pointerEvents: 'none' }} />
           <input
             type="text"
             placeholder="Search brands…"
@@ -472,7 +474,7 @@ function ProductsPage() {
       {/* PAGE HEADER */}
       <div style={{ borderBottom: '1px solid rgba(201,168,76,0.15)', backgroundColor: '#fff', padding: '48px 0 32px' }}>
         <div className="max-w-7xl mx-auto px-6">
-          <p style={{ color: '#C9A84C', fontSize: '10px', letterSpacing: '0.35em', textTransform: 'uppercase', marginBottom: '10px' }}>
+          <p style={{ color: '#1A1A1A', fontSize: '10px', letterSpacing: '0.35em', textTransform: 'uppercase', marginBottom: '10px' }}>
             Our Collections
           </p>
           <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', flexWrap: 'wrap', gap: '12px' }}>
@@ -484,7 +486,7 @@ function ProductsPage() {
               All Jewellery
             </h1>
             <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-              <p style={{ fontSize: '12px', color: '#9B9B9B', letterSpacing: '0.1em', margin: 0 }}>
+              <p style={{ fontSize: '12px', color: '#1A1A1A', letterSpacing: '0.1em', margin: 0 }}>
                 {loading ? '…' : `${total} pieces`}
               </p>
               <button
@@ -492,9 +494,9 @@ function ProductsPage() {
                 className="lg:hidden"
                 style={{
                   display: 'flex', alignItems: 'center', gap: '6px',
-                  border: '1px solid rgba(201,168,76,0.4)', padding: '8px 14px',
+                  border: '1px solid #1A1A1A', padding: '8px 14px',
                   fontSize: '11px', letterSpacing: '0.15em', textTransform: 'uppercase',
-                  color: '#C9A84C', background: 'none', cursor: 'pointer',
+                  color: '#1A1A1A', background: 'none', cursor: 'pointer',
                 }}
               >
                 <SlidersHorizontal size={13} /> Filters
@@ -510,7 +512,7 @@ function ProductsPage() {
       {hasFilters && (
         <div style={{ backgroundColor: '#fff', borderBottom: '1px solid #f0f0f0', padding: '10px 0' }}>
           <div className="max-w-7xl mx-auto px-6" style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
-            <span style={{ fontSize: '10px', color: '#9B9B9B', letterSpacing: '0.1em', textTransform: 'uppercase' }}>Active:</span>
+            <span style={{ fontSize: '10px', color: '#1A1A1A', letterSpacing: '0.1em', textTransform: 'uppercase' }}>Active:</span>
             {search && <Chip label={`"${search}"`} onRemove={() => setSearch('')} />}
             {categoryId && <Chip label={categories.find(c => c.id === categoryId)?.name ?? 'Category'} onRemove={() => setCategoryId('')} />}
             {metalType && <Chip label={metalType} onRemove={() => setMetalType('')} />}
@@ -555,11 +557,11 @@ function ProductsPage() {
           <div style={{ flex: 1, minWidth: 0 }}>
             {/* Top bar */}
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '28px', flexWrap: 'wrap', gap: '12px' }}>
-              <p style={{ fontSize: '12px', color: '#9B9B9B', margin: 0 }}>
+              <p style={{ fontSize: '12px', color: '#1A1A1A', margin: 0 }}>
                 {loading ? 'Loading…' : `Showing ${displayProducts.length} of ${total} pieces`}
               </p>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <span style={{ fontSize: '11px', color: '#9B9B9B', letterSpacing: '0.1em', textTransform: 'uppercase' }}>Sort:</span>
+                <span style={{ fontSize: '11px', color: '#1A1A1A', letterSpacing: '0.1em', textTransform: 'uppercase' }}>Sort:</span>
                 <select
                   value={sort}
                   onChange={e => setSort(e.target.value)}
@@ -586,7 +588,7 @@ function ProductsPage() {
                 <p style={{ fontFamily: "'Cormorant Garamond', Georgia, serif", fontSize: '1.8rem', fontWeight: 300, color: 'rgba(26,26,26,0.25)', marginBottom: '12px' }}>
                   No pieces found
                 </p>
-                <p style={{ fontSize: '13px', color: '#9B9B9B', marginBottom: '20px' }}>Try adjusting your filters</p>
+                <p style={{ fontSize: '13px', color: '#555555', marginBottom: '20px' }}>Try adjusting your filters</p>
                 <button onClick={resetFilters} style={{
                   border: '1px solid rgba(201,168,76,0.5)', color: '#C9A84C',
                   padding: '10px 24px', fontSize: '10px', letterSpacing: '0.2em',
@@ -613,7 +615,7 @@ function ProductsPage() {
                     style={{
                       width: '38px', height: '38px', fontSize: '12px', cursor: 'pointer',
                       backgroundColor: page === i + 1 ? '#C9A84C' : 'transparent',
-                      color: page === i + 1 ? '#fff' : '#6B6B6B',
+                      color: page === i + 1 ? '#fff' : '#444444',
                       border: page === i + 1 ? '1px solid #C9A84C' : '1px solid #e5e5e5',
                     }}
                   >

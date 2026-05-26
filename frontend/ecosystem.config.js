@@ -13,12 +13,12 @@ module.exports = {
     listen_timeout: 10000,
     kill_timeout: 5000,
     env: {
-      PORT: 4002,
+      PORT: 3000,
       NODE_ENV: 'production',
       HOSTNAME: '0.0.0.0',
     },
     env_production: {
-      PORT: 4002,
+      PORT: 3000,
       NODE_ENV: 'production',
       HOSTNAME: '0.0.0.0',
     },

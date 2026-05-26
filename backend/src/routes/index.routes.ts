@@ -14,6 +14,7 @@ import adminRoutes from './admin.routes';
 import newsletterRoutes from './newsletter.routes';
 import contactRoutes from './contact.routes';
 import shippingRoutes from './shipping.routes';
+import botRoutes from './bot.routes';
 
 const router = Router();
 
@@ -32,6 +33,7 @@ router.use('/admin', adminRoutes);
 router.use('/newsletter', newsletterRoutes);
 router.use('/contact', contactRoutes);
 router.use('/shipping', shippingRoutes);
+router.use('/bot', botRoutes);
 
 router.get('/health', (_req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString(), service: 'BRM Jewellery API' });

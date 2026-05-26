@@ -4,10 +4,10 @@ module.exports = {
       name: 'brm-jewellery-backend',
       script: './dist/server.js',
       instances: 1,
-      exec_mode: 'cluster',
+      exec_mode: 'fork',
       env_production: {
         NODE_ENV: 'production',
-        PORT: 4001,
+        PORT: 4000,
         SERVER_HOST: '0.0.0.0',
       },
       error_file: './logs/pm2-error.log',
