@@ -24,4 +24,14 @@ export const productApi = {
 
   setPrimaryImage: (productId: string, imageId: string) =>
     api.patch(`/products/${productId}/images/${imageId}/primary`),
+
+  // Variant management (admin)
+  createVariant: (productId: string, data: Record<string, unknown>) =>
+    api.post(`/products/${productId}/variants`, data),
+
+  updateVariant: (productId: string, variantId: string, data: Record<string, unknown>) =>
+    api.put(`/products/${productId}/variants/${variantId}`, data),
+
+  deleteVariant: (productId: string, variantId: string) =>
+    api.delete(`/products/${productId}/variants/${variantId}`),
 };

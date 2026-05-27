@@ -15,6 +15,19 @@ import { formatGBP } from '@/lib/formatCurrency';
 import { formatUKDate } from '@/lib/formatDate';
 import toast from 'react-hot-toast';
 
+interface ProductVariant {
+  id: string;
+  finishName: string;
+  badge: string;
+  metalType?: string;
+  carat?: string;
+  isPremium: boolean;
+  price: number;
+  stockQty: number;
+  sku: string;
+  sortOrder: number;
+}
+
 interface Product {
   id: string; title: string; slug: string; description?: string; story?: string; brand?: string;
   baseCost: number; metalType?: string; carat?: string; weightGrams?: number; sku: string;
@@ -22,6 +35,7 @@ interface Product {
   images: { id: string; url: string; altText?: string; isPrimary: boolean }[];
   category?: { id: string; name: string };
   attributes: { id: string; fieldName: string; fieldLabel: string; value: string }[];
+  variants: ProductVariant[];
 }
 interface Review {
   id: string; rating: number; title?: string; body?: string; createdAt: string;
@@ -42,6 +56,7 @@ export default function ProductDetailPage() {
   const [qty, setQty] = useState(1);
   const [added, setAdded] = useState(false);
   const [activeTab, setActiveTab] = useState<'details' | 'story' | 'delivery'>('details');
+  const [selectedVariant, setSelectedVariant] = useState<ProductVariant | null>(null);
 
   useEffect(() => {
     const load = async () => {
@@ -53,6 +68,7 @@ export default function ProductDetailPage() {
         if (pRes.status === 'fulfilled') {
           const p = pRes.value.data.data;
           setProduct(p);
+          if (p?.variants?.length > 0) setSelectedVariant(p.variants[0]);
           const params: Record<string, string | number> = { limit: 8, isActive: 'true' };
           if (p?.category?.id) params.categoryId = p.category.id;
           const relRes = await productApi.getAll(params);
@@ -67,7 +83,22 @@ export default function ProductDetailPage() {
 
   const handleAddToCart = () => {
     if (!product) return;
-    addItem({ productId: product.id, title: product.title, price: Number(product.baseCost), imageUrl: sortedImages[0]?.url, sku: product.sku, metalType: product.metalType, carat: product.carat ?? undefined, quantity: qty });
+    const activePrice = selectedVariant ? Number(selectedVariant.price) : Number(product.baseCost);
+    const activeSku   = selectedVariant ? selectedVariant.sku : product.sku;
+    const activeMetal = selectedVariant?.metalType ?? product.metalType;
+    const activeCarat = selectedVariant?.carat ?? product.carat ?? undefined;
+    addItem({
+      productId: product.id,
+      title: product.title,
+      price: activePrice,
+      imageUrl: sortedImages[0]?.url,
+      sku: activeSku,
+      metalType: activeMetal,
+      carat: activeCarat,
+      quantity: qty,
+      variantId: selectedVariant?.id,
+      finishName: selectedVariant?.finishName,
+    });
     setAdded(true);
     toast.success(`Added to bag`);
     setTimeout(() => setAdded(false), 2000);
@@ -96,7 +127,10 @@ export default function ProductDetailPage() {
 
   const sortedImages = [...product.images].sort((a, b) => (b.isPrimary ? 1 : 0) - (a.isPrimary ? 1 : 0));
   const avgRating = reviews.length > 0 ? reviews.reduce((s, r) => s + r.rating, 0) / reviews.length : 0;
-  const inStock = product.stockQty > 0;
+  const hasVariants = product.variants && product.variants.length > 0;
+  const displayPrice = hasVariants && selectedVariant ? Number(selectedVariant.price) : Number(product.baseCost);
+  const inStock = hasVariants && selectedVariant ? selectedVariant.stockQty > 0 : product.stockQty > 0;
+  const maxQty   = hasVariants && selectedVariant ? selectedVariant.stockQty : product.stockQty;
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
@@ -122,7 +156,7 @@ export default function ProductDetailPage() {
           </div>
 
           <div className="flex items-baseline gap-3">
-            <p className="font-cormorant text-3xl font-light text-ink">{formatGBP(Number(product.baseCost))}</p>
+            <p className="font-cormorant text-3xl font-light text-ink">{formatGBP(displayPrice)}</p>
             <span className="text-xs text-ink-muted">incl. VAT</span>
           </div>
 
@@ -158,10 +192,65 @@ export default function ProductDetailPage() {
             </div>
           )}
 
+          {/* Select a Finish — shown only when variants exist */}
+          {hasVariants && (
+            <div className="space-y-3">
+              <p className="text-xs uppercase tracking-widest text-ink font-medium">Select a Finish</p>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                {product.variants.map((v) => {
+                  const isSelected = selectedVariant?.id === v.id;
+                  // Determine badge color
+                  const isGold = v.metalType?.toLowerCase().includes('gold') || v.carat?.toLowerCase().includes('gold') || v.finishName?.toLowerCase().includes('gold') || v.finishName?.toLowerCase().includes('vermeil');
+                  return (
+                    <button
+                      key={v.id}
+                      onClick={() => { setSelectedVariant(v); setQty(1); }}
+                      className={`relative flex flex-col items-center gap-1.5 border p-3 transition-all text-center ${
+                        isSelected
+                          ? 'border-gold bg-cream'
+                          : 'border-gold/20 hover:border-gold/50'
+                      }`}
+                    >
+                      {/* Selected tick */}
+                      {isSelected && (
+                        <span className="absolute -top-2 -right-2 w-5 h-5 rounded-full bg-gold flex items-center justify-center">
+                          <svg viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth={3} className="w-3 h-3">
+                            <polyline points="20 6 9 17 4 12" />
+                          </svg>
+                        </span>
+                      )}
+                      {/* Metal badge circle */}
+                      <span className={`w-12 h-12 rounded-full flex items-center justify-center text-[10px] font-bold leading-tight text-center ${
+                        isGold
+                          ? 'bg-gradient-to-br from-yellow-300 via-yellow-400 to-yellow-600 text-yellow-900'
+                          : 'bg-gradient-to-br from-gray-200 via-gray-300 to-gray-400 text-gray-700'
+                      }`}>
+                        {v.badge}
+                      </span>
+                      <span className="text-xs font-medium text-ink leading-tight">{v.finishName}</span>
+                      {v.isPremium && (
+                        <span className="text-[9px] uppercase tracking-widest text-gold flex items-center gap-0.5">
+                          <svg viewBox="0 0 24 24" fill="currentColor" className="w-2.5 h-2.5"><path d="M12 2l1.5 4.5H18l-3.75 2.7 1.5 4.5L12 11.1l-3.75 2.6 1.5-4.5L6 6.5h4.5z"/></svg>
+                          Premium
+                        </span>
+                      )}
+                      <span className={`text-sm font-medium ${v.isPremium ? 'text-gold' : 'text-ink'}`}>
+                        {formatGBP(Number(v.price))}
+                      </span>
+                      {v.stockQty === 0 && (
+                        <span className="text-[9px] uppercase tracking-widest text-danger">Sold out</span>
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
           {/* Stock */}
           <div className="flex items-center gap-2">
             <span className={`w-2 h-2 rounded-full ${inStock ? 'bg-success' : 'bg-danger'}`} />
-            <span className="text-xs text-ink-muted">{inStock ? `In stock (${product.stockQty} available)` : 'Out of stock'}</span>
+            <span className="text-xs text-ink-muted">{inStock ? `In stock (${maxQty} available)` : 'Out of stock'}</span>
           </div>
 
           {/* Quantity + Add to Cart */}
@@ -173,11 +262,11 @@ export default function ProductDetailPage() {
                     <Minus size={14} />
                   </button>
                   <span className="px-4 py-2 text-sm tabular-nums min-w-[3rem] text-center">{qty}</span>
-                  <button onClick={() => setQty(Math.min(product.stockQty, qty + 1))} className="px-3 py-2 hover:bg-cream transition-colors">
+                  <button onClick={() => setQty(Math.min(maxQty, qty + 1))} className="px-3 py-2 hover:bg-cream transition-colors">
                     <Plus size={14} />
                   </button>
                 </div>
-                <span className="text-xs text-ink-muted">Max {product.stockQty}</span>
+                <span className="text-xs text-ink-muted">Max {maxQty}</span>
               </div>
 
               <div className="flex gap-3">
@@ -188,7 +277,7 @@ export default function ProductDetailPage() {
                 <button
                   onClick={() => {
                     if (!user) { router.push('/login?redirect=' + encodeURIComponent(`/products/${product.slug}`)); return; }
-                    toggle({ productId: product.id, slug: product.slug, title: product.title, price: Number(product.baseCost), imageUrl: sortedImages[0]?.url, metalType: product.metalType, carat: product.carat ?? undefined, category: product.category?.name });
+                    toggle({ productId: product.id, slug: product.slug, title: product.title, price: displayPrice, imageUrl: sortedImages[0]?.url, metalType: product.metalType, carat: product.carat ?? undefined, category: product.category?.name });
                     toast.success(isWishlisted(product.id) ? 'Removed from wishlist' : 'Added to wishlist');
                   }}
                   className="border border-gold/30 px-4 py-3.5 flex items-center justify-center hover:border-gold transition-colors"
@@ -200,7 +289,7 @@ export default function ProductDetailPage() {
             </div>
           )}
 
-          <p className="text-xs text-ink-muted">SKU: {product.sku}</p>
+          <p className="text-xs text-ink-muted">SKU: {selectedVariant ? selectedVariant.sku : product.sku}</p>
         </div>
       </div>
 

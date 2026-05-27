@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(find /home/ubuntu/brmjewellery -type f -name \"*.py\" | grep -E \"\\(model|product|variant\\)\" | head -20)",
+      "Read(//home/ubuntu/brmjewellery/**)",
+      "Bash(ls /home/ubuntu/brmjewellery/)"
+    ],
+    "additionalDirectories": [
+      "/home/ubuntu/brmjewellery/backend/prisma"
+    ]
+  }
+}

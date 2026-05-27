@@ -77,3 +77,32 @@ export const setPrimaryImage = asyncHandler(async (req: Request, res: Response) 
   await productService.setPrimaryImage(req.params.id, req.params.imageId);
   sendSuccess(res, null, 'Primary image updated');
 });
+
+export const createVariant = asyncHandler(async (req: Request, res: Response) => {
+  const data = {
+    ...req.body,
+    price: parseFloat(req.body.price),
+    stockQty: parseInt(req.body.stockQty ?? '0'),
+    sortOrder: parseInt(req.body.sortOrder ?? '0'),
+    isPremium: req.body.isPremium === true || req.body.isPremium === 'true',
+    isActive: req.body.isActive === undefined ? true : req.body.isActive === true || req.body.isActive === 'true',
+  };
+  const variant = await productService.createVariant(req.params.id, data);
+  sendSuccess(res, variant, 'Variant created', HTTP_STATUS.CREATED);
+});
+
+export const updateVariant = asyncHandler(async (req: Request, res: Response) => {
+  const data = { ...req.body };
+  if (data.price !== undefined) data.price = parseFloat(data.price);
+  if (data.stockQty !== undefined) data.stockQty = parseInt(data.stockQty);
+  if (data.sortOrder !== undefined) data.sortOrder = parseInt(data.sortOrder);
+  if (data.isPremium !== undefined) data.isPremium = data.isPremium === true || data.isPremium === 'true';
+  if (data.isActive !== undefined) data.isActive = data.isActive === true || data.isActive === 'true';
+  const variant = await productService.updateVariant(req.params.id, req.params.variantId, data);
+  sendSuccess(res, variant, 'Variant updated');
+});
+
+export const deleteVariant = asyncHandler(async (req: Request, res: Response) => {
+  await productService.deleteVariant(req.params.id, req.params.variantId);
+  sendSuccess(res, null, 'Variant deleted');
+});

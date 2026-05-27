@@ -138,6 +138,11 @@ export const getProducts = async (
       include: {
         category: { select: { id: true, name: true, slug: true } },
         images: { take: 1, orderBy: { isPrimary: 'desc' } },
+        variants: {
+          where: { isActive: true },
+          orderBy: { sortOrder: 'asc' },
+          select: { id: true, finishName: true, metalType: true, carat: true, isPremium: true, price: true },
+        },
         _count: { select: { reviews: true } },
       },
     }),
@@ -153,6 +158,10 @@ export const getProductBySlug = async (slug: string) => {
       category: true,
       attributes: { orderBy: { fieldName: 'asc' } },
       images: { orderBy: { sortOrder: 'asc' } },
+      variants: {
+        where: { isActive: true },
+        orderBy: { sortOrder: 'asc' },
+      },
       reviews: {
         where: { isVisible: true },
         include: { user: { select: { firstName: true, lastName: true } } },
@@ -172,10 +181,85 @@ export const getProductById = async (id: string) => {
       category: true,
       attributes: { orderBy: { fieldName: 'asc' } },
       images: { orderBy: { sortOrder: 'asc' } },
+      variants: {
+        where: { isActive: true },
+        orderBy: { sortOrder: 'asc' },
+      },
     },
   });
   if (!product) throw new AppError(ERROR_MESSAGES.PRODUCT_NOT_FOUND, HTTP_STATUS.NOT_FOUND);
   return product;
+};
+
+// ─── Variant CRUD ───────────────────────────────────────────
+
+export interface VariantInput {
+  finishName: string;
+  badge: string;
+  metalType?: string;
+  carat?: string;
+  isPremium?: boolean;
+  price: number;
+  stockQty?: number;
+  sku: string;
+  sortOrder?: number;
+  isActive?: boolean;
+}
+
+export const createVariant = async (productId: string, data: VariantInput) => {
+  const product = await prisma.product.findUnique({ where: { id: productId } });
+  if (!product) throw new AppError(ERROR_MESSAGES.PRODUCT_NOT_FOUND, HTTP_STATUS.NOT_FOUND);
+
+  const skuExists = await prisma.productVariant.findUnique({ where: { sku: data.sku } });
+  if (skuExists) throw new AppError('Variant SKU already exists', HTTP_STATUS.CONFLICT);
+
+  return prisma.productVariant.create({
+    data: {
+      productId,
+      finishName: data.finishName,
+      badge: data.badge,
+      metalType: data.metalType,
+      carat: data.carat,
+      isPremium: data.isPremium ?? false,
+      price: data.price,
+      stockQty: data.stockQty ?? 0,
+      sku: data.sku,
+      sortOrder: data.sortOrder ?? 0,
+      isActive: data.isActive ?? true,
+    },
+  });
+};
+
+export const updateVariant = async (productId: string, variantId: string, data: Partial<VariantInput>) => {
+  const variant = await prisma.productVariant.findFirst({ where: { id: variantId, productId } });
+  if (!variant) throw new AppError('Variant not found', HTTP_STATUS.NOT_FOUND);
+
+  if (data.sku && data.sku !== variant.sku) {
+    const skuExists = await prisma.productVariant.findFirst({ where: { sku: data.sku, id: { not: variantId } } });
+    if (skuExists) throw new AppError('Variant SKU already exists', HTTP_STATUS.CONFLICT);
+  }
+
+  return prisma.productVariant.update({
+    where: { id: variantId },
+    data: {
+      ...(data.finishName !== undefined && { finishName: data.finishName }),
+      ...(data.badge !== undefined && { badge: data.badge }),
+      ...(data.metalType !== undefined && { metalType: data.metalType }),
+      ...(data.carat !== undefined && { carat: data.carat }),
+      ...(data.isPremium !== undefined && { isPremium: data.isPremium }),
+      ...(data.price !== undefined && { price: data.price }),
+      ...(data.stockQty !== undefined && { stockQty: data.stockQty }),
+      ...(data.sku !== undefined && { sku: data.sku }),
+      ...(data.sortOrder !== undefined && { sortOrder: data.sortOrder }),
+      ...(data.isActive !== undefined && { isActive: data.isActive }),
+    },
+  });
+};
+
+export const deleteVariant = async (productId: string, variantId: string): Promise<void> => {
+  const variant = await prisma.productVariant.findFirst({ where: { id: variantId, productId } });
+  if (!variant) throw new AppError('Variant not found', HTTP_STATUS.NOT_FOUND);
+  await prisma.productVariant.delete({ where: { id: variantId } });
 };
 
 export const updateProduct = async (id: string, data: UpdateProductInput, newImageUrls: string[] = []) => {

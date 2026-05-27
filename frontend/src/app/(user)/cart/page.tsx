@@ -40,7 +40,7 @@ export default function CartPage() {
         {/* Items */}
         <div className="lg:col-span-2 space-y-4">
           {items.map((item) => (
-            <div key={item.productId} className="flex gap-4 border border-gold/10 p-4">
+            <div key={item.id} className="flex gap-4 border border-gold/10 p-4">
               {/* Image */}
               <div className="w-24 h-24 flex-shrink-0 bg-cream overflow-hidden">
                 {item.imageUrl ? (
@@ -56,22 +56,33 @@ export default function CartPage() {
                 <div className="flex justify-between">
                   <div>
                     <Link href={`/products/${item.sku}`} className="text-sm font-medium text-ink hover:text-gold transition-colors line-clamp-2">{item.title}</Link>
-                    {(item.metalType || item.carat) && (
+                    {/* Finish badge — shown when a variant is selected */}
+                    {item.finishName && (
+                      <span className="inline-flex items-center gap-1 mt-1 text-[10px] uppercase tracking-widest bg-cream border border-gold/20 text-ink px-2 py-0.5">
+                        <span className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{
+                          background: item.metalType?.toUpperCase() === 'GOLD'
+                            ? 'linear-gradient(135deg,#f5d97a,#C9A84C,#a8782a)'
+                            : 'linear-gradient(135deg,#e8e8e8,#c8c8c8,#a0a0a0)',
+                        }} />
+                        {item.finishName}
+                      </span>
+                    )}
+                    {!item.finishName && (item.metalType || item.carat) && (
                       <p className="text-xs text-ink-muted mt-0.5">{[item.metalType, item.carat].filter(Boolean).join(' · ')}</p>
                     )}
                   </div>
-                  <button onClick={() => removeItem(item.productId)} className="text-ink-muted hover:text-danger transition-colors ml-3 flex-shrink-0">
+                  <button onClick={() => removeItem(item.id)} className="text-ink-muted hover:text-danger transition-colors ml-3 flex-shrink-0">
                     <Trash2 size={14} />
                   </button>
                 </div>
 
                 <div className="flex items-center justify-between mt-3">
                   <div className="flex items-center border border-gold/20">
-                    <button onClick={() => updateQuantity(item.productId, item.quantity - 1)} className="px-2.5 py-1.5 hover:bg-cream transition-colors">
+                    <button onClick={() => updateQuantity(item.id, item.quantity - 1)} className="px-2.5 py-1.5 hover:bg-cream transition-colors">
                       <Minus size={12} />
                     </button>
                     <span className="px-3 py-1.5 text-xs tabular-nums">{item.quantity}</span>
-                    <button onClick={() => updateQuantity(item.productId, item.quantity + 1)} className="px-2.5 py-1.5 hover:bg-cream transition-colors">
+                    <button onClick={() => updateQuantity(item.id, item.quantity + 1)} className="px-2.5 py-1.5 hover:bg-cream transition-colors">
                       <Plus size={12} />
                     </button>
                   </div>

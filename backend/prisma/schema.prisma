@@ -196,6 +196,7 @@ model Product {
   category     Category           @relation(fields: [categoryId], references: [id])
   images       ProductImage[]
   attributes   ProductAttribute[]
+  variants     ProductVariant[]
   metalType    MetalType?
   metalColor   String?
   carat        String?
@@ -213,6 +214,26 @@ model Product {
   updatedAt    DateTime           @updatedAt
 
   @@map("products")
+}
+
+model ProductVariant {
+  id          String   @id @default(cuid())
+  productId   String
+  product     Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  finishName  String
+  badge       String
+  metalType   String?
+  carat       String?
+  isPremium   Boolean  @default(false)
+  price       Decimal  @db.Decimal(10, 2)
+  stockQty    Int      @default(0)
+  sku         String   @unique
+  sortOrder   Int      @default(0)
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("product_variants")
 }
 
 model ProductAttribute {

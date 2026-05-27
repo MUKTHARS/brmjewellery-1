@@ -18,4 +18,9 @@ router.delete('/:id', authenticate, requireAdmin, productController.deleteProduc
 router.delete('/:id/images/:imageId', authenticate, requireAdmin, productController.deleteProductImage);
 router.patch('/:id/images/:imageId/primary', authenticate, requireAdmin, productController.setPrimaryImage);
 
+// Variant routes (admin)
+router.post('/:id/variants', authenticate, requireAdmin, productController.createVariant);
+router.put('/:id/variants/:variantId', authenticate, requireAdmin, productController.updateVariant);
+router.delete('/:id/variants/:variantId', authenticate, requireAdmin, productController.deleteVariant);
+
 export default router;

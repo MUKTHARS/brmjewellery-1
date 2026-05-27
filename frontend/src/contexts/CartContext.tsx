@@ -12,6 +12,8 @@ export interface CartItem {
   quantity: number;
   metalType?: string;
   carat?: string;
+  variantId?: string;
+  finishName?: string;
 }
 
 interface CartContextType {
@@ -19,8 +21,8 @@ interface CartContextType {
   count: number;
   subtotal: number;
   addItem: (item: Omit<CartItem, 'id'>) => void;
-  removeItem: (productId: string) => void;
-  updateQuantity: (productId: string, quantity: number) => void;
+  removeItem: (id: string) => void;
+  updateQuantity: (id: string, quantity: number) => void;
   clearCart: () => void;
 }
 
@@ -45,21 +47,28 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
 
   const addItem = useCallback((item: Omit<CartItem, 'id'>) => {
     setItems((prev) => {
-      const existing = prev.find((i) => i.productId === item.productId);
+      const key = item.variantId ? `${item.productId}-${item.variantId}` : item.productId;
+      const existing = prev.find((i) => {
+        const iKey = i.variantId ? `${i.productId}-${i.variantId}` : i.productId;
+        return iKey === key;
+      });
       if (existing) {
-        return prev.map((i) => i.productId === item.productId ? { ...i, quantity: i.quantity + item.quantity } : i);
+        return prev.map((i) => {
+          const iKey = i.variantId ? `${i.productId}-${i.variantId}` : i.productId;
+          return iKey === key ? { ...i, quantity: i.quantity + item.quantity } : i;
+        });
       }
-      return [...prev, { ...item, id: `${item.productId}-${Date.now()}` }];
+      return [...prev, { ...item, id: `${key}-${Date.now()}` }];
     });
   }, []);
 
-  const removeItem = useCallback((productId: string) => {
-    setItems((prev) => prev.filter((i) => i.productId !== productId));
+  const removeItem = useCallback((id: string) => {
+    setItems((prev) => prev.filter((i) => i.id !== id));
   }, []);
 
-  const updateQuantity = useCallback((productId: string, quantity: number) => {
+  const updateQuantity = useCallback((id: string, quantity: number) => {
     if (quantity < 1) return;
-    setItems((prev) => prev.map((i) => i.productId === productId ? { ...i, quantity } : i));
+    setItems((prev) => prev.map((i) => i.id === id ? { ...i, quantity } : i));
   }, []);
 
   const clearCart = useCallback(() => setItems([]), []);

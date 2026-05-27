@@ -558,12 +558,24 @@ export default function CheckoutPage() {
   const OrderSummary = () => (
     <div className="space-y-3 text-sm">
       {items.map((item) => (
-        <div key={item.productId} className="flex gap-3">
+        <div key={item.id} className="flex gap-3">
           <div className="w-14 h-14 flex-shrink-0 bg-cream overflow-hidden">
             {item.imageUrl && <img src={resolveImageUrl(item.imageUrl)} alt={item.title} className="w-full h-full object-cover" />}
           </div>
           <div className="flex-1 min-w-0">
             <p className="text-xs font-medium text-ink line-clamp-2">{item.title}</p>
+            {item.finishName ? (
+              <span className="inline-flex items-center gap-1 mt-0.5 text-[9px] uppercase tracking-widest bg-cream border border-gold/20 text-ink px-1.5 py-0.5">
+                <span className="w-2 h-2 rounded-full flex-shrink-0" style={{
+                  background: item.metalType?.toUpperCase() === 'GOLD'
+                    ? 'linear-gradient(135deg,#f5d97a,#C9A84C,#a8782a)'
+                    : 'linear-gradient(135deg,#e8e8e8,#c8c8c8,#a0a0a0)',
+                }} />
+                {item.finishName}
+              </span>
+            ) : (item.metalType || item.carat) ? (
+              <p className="text-xs text-ink-muted mt-0.5">{[item.metalType, item.carat].filter(Boolean).join(' · ')}</p>
+            ) : null}
             <p className="text-xs text-ink-muted mt-0.5">Qty {item.quantity}</p>
           </div>
           <p className="text-xs tabular-nums font-medium">{formatGBP(item.price * item.quantity)}</p>

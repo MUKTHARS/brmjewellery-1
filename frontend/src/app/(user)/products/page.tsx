@@ -13,12 +13,22 @@ import toast from 'react-hot-toast';
 import { formatGBP } from '@/lib/formatCurrency';
 import { resolveImageUrl } from '@/lib/resolveImageUrl';
 
+interface ProductVariantSwatch {
+  id: string;
+  finishName: string;
+  metalType?: string;
+  carat?: string;
+  isPremium: boolean;
+  price: number;
+}
+
 interface Product {
   id: string; slug: string; title: string; baseCost: number;
   metalType?: string; metalColor?: string; carat?: string;
   gemstone?: string; diamondShape?: string;
   brand?: string; weightGrams?: number; isActive: boolean;
   images?: { url: string }[]; category?: { id: string; name: string };
+  variants?: ProductVariantSwatch[];
 }
 
 // Maps UI label → API metalType value (GOLD/SILVER/PLATINUM)
@@ -242,6 +252,39 @@ function ProductCardLuxury({ product: p, onAddToCart }: { product: Product; onAd
 
       {/* Info */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
+
+        {/* Finish variant circles */}
+        {p.variants && p.variants.length > 0 && (
+          <div style={{ display: 'flex', alignItems: 'center', gap: '5px', marginBottom: '2px' }}>
+            {p.variants.map((v) => {
+              const isGold =
+                v.metalType?.toUpperCase() === 'GOLD' ||
+                v.finishName?.toLowerCase().includes('gold') ||
+                v.finishName?.toLowerCase().includes('vermeil');
+              // Gold gradient: yellow-gold; Silver gradient: light grey
+              const background = isGold
+                ? 'linear-gradient(135deg, #f5d97a 0%, #C9A84C 50%, #a8782a 100%)'
+                : 'linear-gradient(135deg, #e8e8e8 0%, #c8c8c8 50%, #a0a0a0 100%)';
+              return (
+                <span
+                  key={v.id}
+                  title={v.finishName}
+                  style={{
+                    width: '18px',
+                    height: '18px',
+                    borderRadius: '50%',
+                    background,
+                    border: '1.5px solid rgba(0,0,0,0.12)',
+                    flexShrink: 0,
+                    display: 'inline-block',
+                    boxShadow: '0 1px 3px rgba(0,0,0,0.15)',
+                  }}
+                />
+              );
+            })}
+          </div>
+        )}
+
         <Link href={`/products/${p.slug}`} style={{ textDecoration: 'none' }}>
           <h3
             style={{
@@ -262,7 +305,9 @@ function ProductCardLuxury({ product: p, onAddToCart }: { product: Product; onAd
 
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: '4px' }}>
           <p style={{ fontSize: '14px', fontWeight: 600, color: '#1A1A1A' }}>
-            {formatGBP(Number(p.baseCost))}
+            {p.variants && p.variants.length > 0
+              ? `From ${formatGBP(Math.min(...p.variants.map(v => Number(v.price))))}`
+              : formatGBP(Number(p.baseCost))}
           </p>
           <Link href={`/products/${p.slug}`} style={{
             fontSize: '9px', letterSpacing: '0.2em', textTransform: 'uppercase',
