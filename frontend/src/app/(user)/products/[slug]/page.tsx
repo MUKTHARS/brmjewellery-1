@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { Minus, Plus, ShoppingBag, ArrowLeft, CheckCircle2, Heart } from 'lucide-react';
 import { productApi } from '@/api/product.api';
 import { reviewApi } from '@/api/review.api';
@@ -45,6 +45,7 @@ interface Review {
 export default function ProductDetailPage() {
   const { slug } = useParams<{ slug: string }>();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { addItem } = useCart();
   const { isWishlisted, toggle } = useWishlist();
   const { user } = useAuth();
@@ -68,7 +69,13 @@ export default function ProductDetailPage() {
         if (pRes.status === 'fulfilled') {
           const p = pRes.value.data.data;
           setProduct(p);
-          if (p?.variants?.length > 0) setSelectedVariant(p.variants[0]);
+          if (p?.variants?.length > 0) {
+            const variantParam = searchParams.get('variant');
+            const preselected = variantParam
+              ? p.variants.find((v: ProductVariant) => v.id === variantParam) ?? p.variants[0]
+              : p.variants[0];
+            setSelectedVariant(preselected);
+          }
           const params: Record<string, string | number> = { limit: 8, isActive: 'true' };
           if (p?.category?.id) params.categoryId = p.category.id;
           const relRes = await productApi.getAll(params);

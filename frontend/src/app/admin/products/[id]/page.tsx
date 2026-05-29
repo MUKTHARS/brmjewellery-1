@@ -393,7 +393,7 @@ export default function ProductFormPage() {
               {variants.length > 0 && (
                 <div className="mb-4 border border-gold/10 overflow-hidden">
                   {/* Header */}
-                  <div className="grid grid-cols-[1fr_80px_70px_70px_70px_80px_72px] gap-2 bg-cream px-3 py-2">
+                  <div className="grid grid-cols-[1fr_56px_58px_64px_44px_1fr_56px] gap-1 bg-cream px-3 py-2">
                     {['Finish', 'Badge', 'Metal', 'Price', 'Stock', 'SKU', ''].map((h) => (
                       <span key={h} className="text-[10px] uppercase tracking-widest text-ink-muted font-medium">{h}</span>
                     ))}
@@ -403,7 +403,7 @@ export default function ProductFormPage() {
                     <div key={v.id} className="border-t border-gold/8">
                       {editingVariantId === v.id ? (
                         /* ── Inline edit row ── */
-                        <div className="grid grid-cols-[1fr_80px_70px_70px_70px_80px_72px] gap-2 px-3 py-2 items-center bg-gold/5">
+                        <div className="grid grid-cols-[1fr_56px_58px_64px_44px_1fr_56px] gap-1 px-3 py-2 items-center bg-gold/5">
                           <input className="input-base text-xs py-1" value={editVariantForm.finishName}
                             onChange={(e) => setEditVariantForm({ ...editVariantForm, finishName: e.target.value })} placeholder="e.g. 18ct Gold" />
                           <input className="input-base text-xs py-1" value={editVariantForm.badge}
@@ -433,28 +433,32 @@ export default function ProductFormPage() {
                         </div>
                       ) : (
                         /* ── Read row ── */
-                        <div className="grid grid-cols-[1fr_80px_70px_70px_70px_80px_72px] gap-2 px-3 py-2.5 items-center hover:bg-cream/50 transition-colors">
-                          <div className="flex items-center gap-2">
+                        <div className="grid grid-cols-[1fr_56px_58px_64px_44px_1fr_56px] gap-1 px-3 py-2.5 items-center hover:bg-cream/50 transition-colors">
+                          <div className="flex items-center gap-1.5 min-w-0">
                             {/* Colour swatch */}
-                            <span className="w-4 h-4 rounded-full flex-shrink-0 border border-black/10" style={{
+                            <span className="w-3.5 h-3.5 rounded-full flex-shrink-0 border border-black/10" style={{
                               background: v.metalType === 'GOLD'
                                 ? 'linear-gradient(135deg,#f5d97a,#C9A84C,#a8782a)'
                                 : 'linear-gradient(135deg,#e8e8e8,#c8c8c8,#a0a0a0)',
                             }} />
-                            <span className="text-sm text-ink font-medium">{v.finishName}</span>
-                            {v.isPremium && (
-                              <span className="text-[9px] uppercase tracking-wider text-gold bg-gold/10 px-1.5 py-0.5">Premium</span>
-                            )}
-                            {!v.isActive && (
-                              <span className="text-[9px] uppercase tracking-wider text-ink-muted bg-gray-100 px-1.5 py-0.5">Hidden</span>
-                            )}
+                            <div className="min-w-0">
+                              <span className="text-sm text-ink font-medium block truncate">{v.finishName}</span>
+                              <div className="flex gap-1 mt-0.5">
+                                {v.isPremium && (
+                                  <span className="text-[8px] uppercase tracking-wider text-gold bg-gold/10 px-1 py-px">Premium</span>
+                                )}
+                                {!v.isActive && (
+                                  <span className="text-[8px] uppercase tracking-wider text-ink-muted bg-gray-100 px-1 py-px">Hidden</span>
+                                )}
+                              </div>
+                            </div>
                           </div>
                           <span className="text-xs text-ink-muted">{v.badge}</span>
                           <span className="text-xs text-ink-muted">{v.metalType}</span>
                           <span className="text-sm font-semibold text-ink">£{Number(v.price).toFixed(2)}</span>
                           <span className="text-xs text-ink-muted">{v.stockQty}</span>
                           <span className="text-xs text-ink-muted truncate">{v.sku}</span>
-                          <div className="flex items-center gap-1">
+                          <div className="flex items-center gap-1 flex-shrink-0">
                             <button onClick={() => handleEditVariant(v)}
                               className="p-1.5 text-ink-muted hover:text-gold transition-colors" title="Edit">
                               <Pencil size={13} />

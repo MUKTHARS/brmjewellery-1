@@ -253,7 +253,7 @@ function ProductCardLuxury({ product: p, onAddToCart }: { product: Product; onAd
       {/* Info */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
 
-        {/* Finish variant circles */}
+        {/* Finish variant circles — clickable, each navigates to product page with that variant pre-selected */}
         {p.variants && p.variants.length > 0 && (
           <div style={{ display: 'flex', alignItems: 'center', gap: '5px', marginBottom: '2px' }}>
             {p.variants.map((v) => {
@@ -261,14 +261,15 @@ function ProductCardLuxury({ product: p, onAddToCart }: { product: Product; onAd
                 v.metalType?.toUpperCase() === 'GOLD' ||
                 v.finishName?.toLowerCase().includes('gold') ||
                 v.finishName?.toLowerCase().includes('vermeil');
-              // Gold gradient: yellow-gold; Silver gradient: light grey
               const background = isGold
                 ? 'linear-gradient(135deg, #f5d97a 0%, #C9A84C 50%, #a8782a 100%)'
                 : 'linear-gradient(135deg, #e8e8e8 0%, #c8c8c8 50%, #a0a0a0 100%)';
               return (
-                <span
+                <Link
                   key={v.id}
+                  href={`/products/${p.slug}?variant=${v.id}`}
                   title={v.finishName}
+                  onClick={(e) => e.stopPropagation()}
                   style={{
                     width: '18px',
                     height: '18px',
@@ -278,6 +279,16 @@ function ProductCardLuxury({ product: p, onAddToCart }: { product: Product; onAd
                     flexShrink: 0,
                     display: 'inline-block',
                     boxShadow: '0 1px 3px rgba(0,0,0,0.15)',
+                    cursor: 'pointer',
+                    transition: 'transform 0.15s, box-shadow 0.15s',
+                  }}
+                  onMouseEnter={(e) => {
+                    (e.currentTarget as HTMLAnchorElement).style.transform = 'scale(1.25)';
+                    (e.currentTarget as HTMLAnchorElement).style.boxShadow = '0 2px 6px rgba(0,0,0,0.25)';
+                  }}
+                  onMouseLeave={(e) => {
+                    (e.currentTarget as HTMLAnchorElement).style.transform = 'scale(1)';
+                    (e.currentTarget as HTMLAnchorElement).style.boxShadow = '0 1px 3px rgba(0,0,0,0.15)';
                   }}
                 />
               );
