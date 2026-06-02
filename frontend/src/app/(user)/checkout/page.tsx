@@ -730,6 +730,17 @@ export default function CheckoutPage() {
             <h2 className="text-xs uppercase tracking-widest text-ink mb-4 hidden lg:block">Order Summary</h2>
             <OrderSummary />
           </div>
+
+          {/* ── KLARNA BADGE ── */}
+          <div className="mt-4" style={{
+            display: 'flex', alignItems: 'center', gap: '8px',
+            backgroundColor: '#f9d7e0', padding: '8px 12px',
+          }}>
+            <img src="/assets/Klarna-logo.png" alt="Klarna" style={{ height: '46px', width: 'auto' }} />
+            <span style={{ fontSize: '12px', fontWeight: 600, color: '#1a1a1a' }}>
+              or 3 interest-free payments of {formatGBP(parseFloat((total / 3).toFixed(2)))}
+            </span>
+          </div>
         </div>
       </div>
     </div>

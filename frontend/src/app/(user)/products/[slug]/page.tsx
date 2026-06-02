@@ -167,6 +167,17 @@ export default function ProductDetailPage() {
             <span className="text-xs text-ink-muted">incl. VAT</span>
           </div>
 
+          {/* Klarna instalment badge */}
+          <div style={{
+            display: 'inline-flex', alignItems: 'center', gap: '8px',
+            backgroundColor: '#fcd7e1', padding: '6px 12px',
+          }}>
+            <img src="/assets/Klarna-logo.png" alt="Klarna" style={{ height: '36px', width: 'auto' }} />
+            <span style={{ fontSize: '12px', fontWeight: 600, color: '#1a1a1a' }}>
+              or 3 interest-free payments of {formatGBP(parseFloat((displayPrice / 3).toFixed(2)))}
+            </span>
+          </div>
+
           {(product.brand || product.metalType || product.carat || product.weightGrams) && (
             <div className="flex flex-wrap gap-4 text-xs text-ink-muted">
               {product.brand && (

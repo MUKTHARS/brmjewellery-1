@@ -281,6 +281,14 @@ export default function Header() {
                 })}
               </nav>
 
+              {/* Klarna link */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginLeft: '24px' }}>
+                <img src="/assets/Klarna-logo.png" alt="Klarna" style={{ height: '18px', width: 'auto' }} />
+                <span style={{ fontSize: '11px', color: 'rgba(255,255,255,0.55)', letterSpacing: '0.05em' }}>
+                  0% credit available
+                </span>
+              </div>
+
               {/* Spot prices + Account */}
               <div style={{ display: 'flex', alignItems: 'center', gap: '0' }}>
 

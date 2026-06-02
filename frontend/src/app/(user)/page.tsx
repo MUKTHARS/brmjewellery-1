@@ -21,6 +21,22 @@ export default async function HomePage() {
   return (
     <div style={{ backgroundColor: '#0a0a0a', color: '#fff' }}>
 
+      {/* ── KLARNA STRIP ── */}
+      <div style={{
+        backgroundColor: '#f5dce3',
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        gap: '12px', padding: '1px 24px',
+      }}>
+        <img
+          src="/assets/Klarna-logo.png"
+          alt="Klarna"
+          style={{ height: '44px', width: 'auto', display: 'block' }}
+        />
+        <span style={{ fontSize: '12px', fontWeight: 600, color: '#1a1a1a', letterSpacing: '0.01em' }}>
+          Buy now, pay later — 3 interest-free instalments
+        </span>
+      </div>
+
       {/* ── LIVE PRICE TICKER ── */}
       {prices.length > 0 && (
         <div style={{ backgroundColor: '#000', borderBottom: '1px solid rgba(201,168,76,0.2)' }}
