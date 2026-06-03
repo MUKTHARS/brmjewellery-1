@@ -29,6 +29,15 @@ export const createOrder = async (userId: string, data: CreateOrderInput) => {
       metalType: product.metalType ?? undefined,
       carat: product.carat ?? undefined,
       weightGrams: product.weightGrams ? Number(product.weightGrams) : undefined,
+      variantId: item.variantId ?? undefined,
+      finishName: item.finishName ?? undefined,
+      ringWidth: item.ringWidth ?? undefined,
+      ringProfile: item.ringProfile ?? undefined,
+      ringWeight: item.ringWeight ?? undefined,
+      ringSize: item.ringSize ?? undefined,
+      engravingText: item.engravingText ?? undefined,
+      engravingFont: item.engravingFont ?? undefined,
+      ringFinish: item.ringFinish ?? undefined,
     };
   });
 

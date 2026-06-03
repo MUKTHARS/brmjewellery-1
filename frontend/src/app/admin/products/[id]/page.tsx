@@ -33,11 +33,19 @@ interface ProductVariant {
   sku: string;
   sortOrder: number;
   isActive: boolean;
+  ringWidth?: string;
+  ringProfile?: string;
+  ringWeight?: string;
 }
+
+const RING_WIDTHS   = ['2mm','3mm','4mm','5mm','6mm','7mm','8mm','10mm','12mm'];
+const RING_PROFILES = ['D Shape','Court Shape','Cushion Court Shape','Flat Shape','Flat Comfort Fit'];
+const RING_WEIGHTS  = ['Classic Weight','Extra Heavy Weight','Super Heavy Weight'];
 
 const EMPTY_VARIANT = {
   finishName: '', badge: '', metalType: 'GOLD', carat: '', isPremium: false,
   price: '', stockQty: '10', sku: '', sortOrder: '0', isActive: true,
+  ringWidth: '', ringProfile: '', ringWeight: '',
 };
 
 export default function ProductFormPage() {
@@ -163,6 +171,9 @@ export default function ProductFormPage() {
         sku: variantForm.sku,
         sortOrder: parseInt(variantForm.sortOrder as string) || 0,
         isActive: variantForm.isActive,
+        ringWidth: variantForm.ringWidth || undefined,
+        ringProfile: variantForm.ringProfile || undefined,
+        ringWeight: variantForm.ringWeight || undefined,
       });
       setVariants((prev) => [...prev, data.data].sort((a, b) => a.sortOrder - b.sortOrder));
       setVariantForm({ ...EMPTY_VARIANT });
@@ -182,6 +193,7 @@ export default function ProductFormPage() {
       isPremium: v.isPremium, price: String(v.price),
       stockQty: String(v.stockQty), sku: v.sku,
       sortOrder: String(v.sortOrder), isActive: v.isActive,
+      ringWidth: v.ringWidth || '', ringProfile: v.ringProfile || '', ringWeight: v.ringWeight || '',
     });
   };
 
@@ -200,6 +212,9 @@ export default function ProductFormPage() {
         sku: editVariantForm.sku,
         sortOrder: parseInt(editVariantForm.sortOrder as string) || 0,
         isActive: editVariantForm.isActive,
+        ringWidth: editVariantForm.ringWidth || undefined,
+        ringProfile: editVariantForm.ringProfile || undefined,
+        ringWeight: editVariantForm.ringWeight || undefined,
       });
       setVariants((prev) =>
         prev.map((v) => v.id === variantId
@@ -240,6 +255,8 @@ export default function ProductFormPage() {
       setImages((prev) => prev.map((i) => ({ ...i, isPrimary: i.id === img.id })));
     } catch { toast.error('Failed to set primary image'); }
   };
+
+  const isRingsCategory = categories.find((c) => c.id === form.categoryId)?.slug === 'rings';
 
   if (loading) {
     return <div className="p-8 animate-pulse"><div className="h-8 w-64 bg-gray-100 rounded mb-8" /></div>;
@@ -403,33 +420,63 @@ export default function ProductFormPage() {
                     <div key={v.id} className="border-t border-gold/8">
                       {editingVariantId === v.id ? (
                         /* ── Inline edit row ── */
-                        <div className="grid grid-cols-[1fr_56px_58px_64px_44px_1fr_56px] gap-1 px-3 py-2 items-center bg-gold/5">
-                          <input className="input-base text-xs py-1" value={editVariantForm.finishName}
-                            onChange={(e) => setEditVariantForm({ ...editVariantForm, finishName: e.target.value })} placeholder="e.g. 18ct Gold" />
-                          <input className="input-base text-xs py-1" value={editVariantForm.badge}
-                            onChange={(e) => setEditVariantForm({ ...editVariantForm, badge: e.target.value })} placeholder="18ct" />
-                          <select className="input-base text-xs py-1" value={editVariantForm.metalType}
-                            onChange={(e) => setEditVariantForm({ ...editVariantForm, metalType: e.target.value })}>
-                            <option value="GOLD">Gold</option>
-                            <option value="SILVER">Silver</option>
-                            <option value="PLATINUM">Platinum</option>
-                          </select>
-                          <input type="number" step="0.01" className="input-base text-xs py-1" value={editVariantForm.price}
-                            onChange={(e) => setEditVariantForm({ ...editVariantForm, price: e.target.value })} placeholder="0.00" />
-                          <input type="number" className="input-base text-xs py-1" value={editVariantForm.stockQty}
-                            onChange={(e) => setEditVariantForm({ ...editVariantForm, stockQty: e.target.value })} />
-                          <input className="input-base text-xs py-1" value={editVariantForm.sku}
-                            onChange={(e) => setEditVariantForm({ ...editVariantForm, sku: e.target.value })} />
-                          <div className="flex items-center gap-1">
-                            <button onClick={() => handleSaveVariant(v.id)} disabled={savingVariant}
-                              className="p-1.5 bg-gold text-white hover:bg-gold/80 transition-colors" title="Save">
-                              <Check size={13} />
-                            </button>
-                            <button onClick={() => setEditingVariantId(null)}
-                              className="p-1.5 bg-gray-100 text-ink-muted hover:bg-gray-200 transition-colors" title="Cancel">
-                              <X size={13} />
-                            </button>
+                        <div className="px-3 py-2 bg-gold/5 space-y-2">
+                          <div className="grid grid-cols-[1fr_56px_58px_64px_44px_1fr_56px] gap-1 items-center">
+                            <input className="input-base text-xs py-1" value={editVariantForm.finishName}
+                              onChange={(e) => setEditVariantForm({ ...editVariantForm, finishName: e.target.value })} placeholder="e.g. 18ct Gold" />
+                            <input className="input-base text-xs py-1" value={editVariantForm.badge}
+                              onChange={(e) => setEditVariantForm({ ...editVariantForm, badge: e.target.value })} placeholder="18ct" />
+                            <select className="input-base text-xs py-1" value={editVariantForm.metalType}
+                              onChange={(e) => setEditVariantForm({ ...editVariantForm, metalType: e.target.value })}>
+                              <option value="GOLD">Gold</option>
+                              <option value="SILVER">Silver</option>
+                              <option value="PLATINUM">Platinum</option>
+                            </select>
+                            <input type="number" step="0.01" className="input-base text-xs py-1" value={editVariantForm.price}
+                              onChange={(e) => setEditVariantForm({ ...editVariantForm, price: e.target.value })} placeholder="0.00" />
+                            <input type="number" className="input-base text-xs py-1" value={editVariantForm.stockQty}
+                              onChange={(e) => setEditVariantForm({ ...editVariantForm, stockQty: e.target.value })} />
+                            <input className="input-base text-xs py-1" value={editVariantForm.sku}
+                              onChange={(e) => setEditVariantForm({ ...editVariantForm, sku: e.target.value })} />
+                            <div className="flex items-center gap-1">
+                              <button onClick={() => handleSaveVariant(v.id)} disabled={savingVariant}
+                                className="p-1.5 bg-gold text-white hover:bg-gold/80 transition-colors" title="Save">
+                                <Check size={13} />
+                              </button>
+                              <button onClick={() => setEditingVariantId(null)}
+                                className="p-1.5 bg-gray-100 text-ink-muted hover:bg-gray-200 transition-colors" title="Cancel">
+                                <X size={13} />
+                              </button>
+                            </div>
                           </div>
+                          {isRingsCategory && (
+                            <div className="grid grid-cols-3 gap-2">
+                              <div>
+                                <label className="text-[9px] uppercase tracking-widest text-ink-muted block mb-0.5">Ring Width</label>
+                                <select className="input-base text-xs py-1" value={editVariantForm.ringWidth}
+                                  onChange={(e) => setEditVariantForm({ ...editVariantForm, ringWidth: e.target.value })}>
+                                  <option value="">None</option>
+                                  {RING_WIDTHS.map((w) => <option key={w}>{w}</option>)}
+                                </select>
+                              </div>
+                              <div>
+                                <label className="text-[9px] uppercase tracking-widest text-ink-muted block mb-0.5">Profile</label>
+                                <select className="input-base text-xs py-1" value={editVariantForm.ringProfile}
+                                  onChange={(e) => setEditVariantForm({ ...editVariantForm, ringProfile: e.target.value })}>
+                                  <option value="">None</option>
+                                  {RING_PROFILES.map((p) => <option key={p}>{p}</option>)}
+                                </select>
+                              </div>
+                              <div>
+                                <label className="text-[9px] uppercase tracking-widest text-ink-muted block mb-0.5">Weight</label>
+                                <select className="input-base text-xs py-1" value={editVariantForm.ringWeight}
+                                  onChange={(e) => setEditVariantForm({ ...editVariantForm, ringWeight: e.target.value })}>
+                                  <option value="">None</option>
+                                  {RING_WEIGHTS.map((w) => <option key={w}>{w}</option>)}
+                                </select>
+                              </div>
+                            </div>
+                          )}
                         </div>
                       ) : (
                         /* ── Read row ── */
@@ -544,6 +591,34 @@ export default function ProductFormPage() {
                         value={variantForm.sortOrder}
                         onChange={(e) => setVariantForm({ ...variantForm, sortOrder: e.target.value })} />
                     </div>
+                    {isRingsCategory && (
+                      <>
+                        <div>
+                          <label className="label-base">Ring Width</label>
+                          <select className="input-base" value={variantForm.ringWidth}
+                            onChange={(e) => setVariantForm({ ...variantForm, ringWidth: e.target.value })}>
+                            <option value="">None</option>
+                            {RING_WIDTHS.map((w) => <option key={w}>{w}</option>)}
+                          </select>
+                        </div>
+                        <div>
+                          <label className="label-base">Ring Profile</label>
+                          <select className="input-base" value={variantForm.ringProfile}
+                            onChange={(e) => setVariantForm({ ...variantForm, ringProfile: e.target.value })}>
+                            <option value="">None</option>
+                            {RING_PROFILES.map((p) => <option key={p}>{p}</option>)}
+                          </select>
+                        </div>
+                        <div>
+                          <label className="label-base">Ring Weight</label>
+                          <select className="input-base" value={variantForm.ringWeight}
+                            onChange={(e) => setVariantForm({ ...variantForm, ringWeight: e.target.value })}>
+                            <option value="">None</option>
+                            {RING_WEIGHTS.map((w) => <option key={w}>{w}</option>)}
+                          </select>
+                        </div>
+                      </>
+                    )}
                   </div>
                   <div className="flex items-center gap-4 pt-1">
                     <label className="flex items-center gap-2 cursor-pointer">

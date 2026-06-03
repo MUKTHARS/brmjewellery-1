@@ -14,6 +14,13 @@ export interface CartItem {
   carat?: string;
   variantId?: string;
   finishName?: string;
+  ringWidth?: string;
+  ringProfile?: string;
+  ringWeight?: string;
+  ringSize?: string;
+  engravingText?: string;
+  engravingFont?: string;
+  ringFinish?: string;
 }
 
 interface CartContextType {
@@ -47,14 +54,14 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
 
   const addItem = useCallback((item: Omit<CartItem, 'id'>) => {
     setItems((prev) => {
-      const key = item.variantId ? `${item.productId}-${item.variantId}` : item.productId;
+      const key = [item.productId, item.variantId, item.ringSize, item.ringFinish].filter(Boolean).join('-') || item.productId;
       const existing = prev.find((i) => {
-        const iKey = i.variantId ? `${i.productId}-${i.variantId}` : i.productId;
+        const iKey = [i.productId, i.variantId, i.ringSize, i.ringFinish].filter(Boolean).join('-') || i.productId;
         return iKey === key;
       });
       if (existing) {
         return prev.map((i) => {
-          const iKey = i.variantId ? `${i.productId}-${i.variantId}` : i.productId;
+          const iKey = [i.productId, i.variantId, i.ringSize, i.ringFinish].filter(Boolean).join('-') || i.productId;
           return iKey === key ? { ...i, quantity: i.quantity + item.quantity } : i;
         });
       }

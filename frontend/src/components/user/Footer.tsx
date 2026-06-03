@@ -49,6 +49,7 @@ export default function Footer() {
               <li><Link href="/contact" className="hover:text-gold transition-colors">Contact Us</Link></li>
               <li><Link href="/about" className="hover:text-gold transition-colors">About Us</Link></li>
               <li><Link href="/visit-us" className="hover:text-gold transition-colors">Visit Us</Link></li>
+              <li><Link href="/create-your-own-ring" className="hover:text-gold transition-colors">Create Your Own Ring</Link></li>
               <li><Link href="/ring-builder" className="hover:text-gold transition-colors">Find Your Ring Size</Link></li>
               <li><Link href="/free-ring-sizing" className="hover:text-gold transition-colors">Free Ring Sizing</Link></li>
               <li><Link href="/matt-and-hammered-finishes" className="hover:text-gold transition-colors">Matt and Hammered Finishes</Link></li>

@@ -7,7 +7,6 @@ import Header from '@/components/user/Header';
 import TopBanner from '@/components/user/TopBanner';
 import Footer from '@/components/user/Footer';
 import LiveChat from '@/components/user/LiveChat';
-import EntryPopup from '@/components/user/EntryPopup';
 import { Toaster } from 'react-hot-toast';
 
 export const metadata: Metadata = {
@@ -25,7 +24,6 @@ export default function UserLayout({ children }: { children: React.ReactNode }) 
           <main className="min-h-screen">{children}</main>
           <Footer />
           <Suspense fallback={null}><LiveChat /></Suspense>
-          <Suspense fallback={null}><EntryPopup /></Suspense>
           <Toaster position="top-right" toastOptions={{ style: { fontFamily: 'var(--font-didact)', fontSize: '13px' } }} />
         </WishlistProvider>
       </CartProvider>

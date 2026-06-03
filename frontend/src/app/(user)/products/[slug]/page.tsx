@@ -8,6 +8,7 @@ import { reviewApi } from '@/api/review.api';
 import ImageGallery from '@/components/user/ImageGallery';
 import StarRating from '@/components/user/StarRating';
 import ProductCard from '@/components/user/ProductCard';
+import RingProductDetail from '@/components/user/RingProductDetail';
 import { useCart } from '@/contexts/CartContext';
 import { useWishlist } from '@/contexts/WishlistContext';
 import { useAuth } from '@/contexts/AuthContext';
@@ -138,6 +139,11 @@ export default function ProductDetailPage() {
   const displayPrice = hasVariants && selectedVariant ? Number(selectedVariant.price) : Number(product.baseCost);
   const inStock = hasVariants && selectedVariant ? selectedVariant.stockQty > 0 : product.stockQty > 0;
   const maxQty   = hasVariants && selectedVariant ? selectedVariant.stockQty : product.stockQty;
+
+  // Rings get their own dedicated page layout
+  if (product.category?.slug === 'rings') {
+    return <RingProductDetail product={product} reviews={reviews} relatedProducts={relatedProducts} />;
+  }
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">

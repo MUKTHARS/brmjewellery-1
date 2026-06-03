@@ -204,6 +204,9 @@ export interface VariantInput {
   sku: string;
   sortOrder?: number;
   isActive?: boolean;
+  ringWidth?: string;
+  ringProfile?: string;
+  ringWeight?: string;
 }
 
 export const createVariant = async (productId: string, data: VariantInput) => {
@@ -226,6 +229,9 @@ export const createVariant = async (productId: string, data: VariantInput) => {
       sku: data.sku,
       sortOrder: data.sortOrder ?? 0,
       isActive: data.isActive ?? true,
+      ringWidth: data.ringWidth || null,
+      ringProfile: data.ringProfile || null,
+      ringWeight: data.ringWeight || null,
     },
   });
 };
@@ -252,6 +258,9 @@ export const updateVariant = async (productId: string, variantId: string, data: 
       ...(data.sku !== undefined && { sku: data.sku }),
       ...(data.sortOrder !== undefined && { sortOrder: data.sortOrder }),
       ...(data.isActive !== undefined && { isActive: data.isActive }),
+      ...(data.ringWidth !== undefined && { ringWidth: data.ringWidth || null }),
+      ...(data.ringProfile !== undefined && { ringProfile: data.ringProfile || null }),
+      ...(data.ringWeight !== undefined && { ringWeight: data.ringWeight || null }),
     },
   });
 };

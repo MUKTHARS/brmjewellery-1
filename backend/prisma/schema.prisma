@@ -230,6 +230,9 @@ model ProductVariant {
   sku         String   @unique
   sortOrder   Int      @default(0)
   isActive    Boolean  @default(true)
+  ringWidth   String?
+  ringProfile String?
+  ringWeight  String?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
@@ -331,6 +334,15 @@ model OrderItem {
   weightGrams           Decimal? @db.Decimal(10, 3)
   productTitle          String
   productSku            String
+  variantId             String?
+  finishName            String?
+  ringWidth             String?
+  ringProfile           String?
+  ringWeight            String?
+  ringSize              String?
+  engravingText         String?
+  engravingFont         String?
+  ringFinish            String?
 
   @@map("order_items")
 }

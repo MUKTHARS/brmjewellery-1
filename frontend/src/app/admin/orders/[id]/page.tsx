@@ -18,7 +18,7 @@ interface OrderDetail {
   fulfillmentStatus: string; paymentStatus: string; deliveryMethod: string; notes?: string;
   shippingAddress: { line1: string; line2?: string; city: string; county?: string; postcode: string; country: string; fullName?: string };
   user: { id: string; firstName: string; lastName: string; email: string; phone?: string };
-  items: Array<{ id: string; quantity: number; priceAtPurchaseGBP: number; productTitle: string; productSku: string; metalType?: string; carat?: string }>;
+  items: Array<{ id: string; quantity: number; priceAtPurchaseGBP: number; productTitle: string; productSku: string; metalType?: string; carat?: string; finishName?: string; ringWidth?: string; ringProfile?: string; ringWeight?: string; ringSize?: string; engravingText?: string; engravingFont?: string; ringFinish?: string }>;
   invoice?: { id: string; pdfUrl: string; invoiceNumber: string } | null;
   shipment?: { courier: string; trackingNumber: string; status: string; estimatedDelivery?: string } | null;
 }
@@ -107,7 +107,24 @@ export default function OrderDetailPage() {
                 <div key={item.id} className="px-6 py-4 flex justify-between items-start">
                   <div>
                     <p className="text-sm text-ink font-medium">{item.productTitle}</p>
-                    <p className="text-xs text-ink-muted">{item.productSku}{item.metalType ? ` · ${item.metalType}${item.carat ? ` ${item.carat}` : ''}` : ''}</p>
+                    <p className="text-xs text-ink-muted">{item.productSku}{item.metalType ? ` · ${item.metalType}${item.carat ? ` ${item.carat}` : ''}` : ''}{item.finishName ? ` · ${item.finishName}` : ''}</p>
+                    {(item.ringWidth || item.ringProfile || item.ringWeight) && (
+                      <p className="text-xs text-ink-muted mt-0.5">
+                        {[item.ringWidth, item.ringProfile, item.ringWeight].filter(Boolean).join(' · ')}
+                      </p>
+                    )}
+                    {item.ringSize && (
+                      <p className="text-xs text-ink-muted mt-0.5">
+                        Ring Size: <span className="text-ink font-medium">{item.ringSize}</span>
+                        {item.ringFinish && <span className="ml-2">Finish: <span className="text-ink font-medium">{item.ringFinish}</span></span>}
+                      </p>
+                    )}
+                    {item.engravingText && (
+                      <p className="text-xs text-ink-muted mt-0.5">
+                        Engraving: <span className="text-ink font-medium">"{item.engravingText}"</span>
+                        {item.engravingFont && <span className="ml-1 text-ink-muted">({item.engravingFont})</span>}
+                      </p>
+                    )}
                     <p className="text-xs text-ink-muted mt-0.5">Qty: {item.quantity}</p>
                   </div>
                   <p className="text-sm tabular-nums font-medium">{formatGBP(Number(item.priceAtPurchaseGBP) * item.quantity)}</p>

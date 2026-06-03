@@ -512,7 +512,19 @@ export default function CheckoutPage() {
     setCreating(true);
     try {
       const orderRes = await userOrderApi.create({
-        items: items.map((i) => ({ productId: i.productId, quantity: i.quantity })),
+        items: items.map((i) => ({
+          productId: i.productId,
+          quantity: i.quantity,
+          variantId: i.variantId,
+          finishName: i.finishName,
+          ringWidth: i.ringWidth,
+          ringProfile: i.ringProfile,
+          ringWeight: i.ringWeight,
+          ringSize: i.ringSize,
+          engravingText: i.engravingText,
+          engravingFont: i.engravingFont,
+          ringFinish: i.ringFinish,
+        })),
         shippingAddress: {
           line1: address.line1, line2: address.line2 || undefined,
           city: address.city, county: address.county || undefined,
@@ -576,6 +588,12 @@ export default function CheckoutPage() {
             ) : (item.metalType || item.carat) ? (
               <p className="text-xs text-ink-muted mt-0.5">{[item.metalType, item.carat].filter(Boolean).join(' · ')}</p>
             ) : null}
+            {item.ringSize && (
+              <p className="text-xs text-ink-muted mt-0.5">Size: {item.ringSize}{item.ringFinish && item.ringFinish !== 'Polished' ? ` · ${item.ringFinish}` : ''}</p>
+            )}
+            {item.engravingText && (
+              <p className="text-xs text-ink-muted mt-0.5">Engraving: "{item.engravingText}"{item.engravingFont ? ` (${item.engravingFont})` : ''}</p>
+            )}
             <p className="text-xs text-ink-muted mt-0.5">Qty {item.quantity}</p>
           </div>
           <p className="text-xs tabular-nums font-medium">{formatGBP(item.price * item.quantity)}</p>
